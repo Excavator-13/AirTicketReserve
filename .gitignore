@@ -1,0 +1,52 @@
+# ========== Python / Django ==========
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite3
+*.log
+*.pot
+.mypy_cache/
+.tox/
+*.egg-info/
+*.egg
+env/
+venv/
+.venv/
+.env
+dist/
+build/
+*.manifest
+*.spec
+db.sqlite3
+media/
+staticfiles/
+*.DS_Store
+
+# ========== Node / Vue ==========
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+*.local
+
+# ========== IDE ==========
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ========== Docker ==========
+docker-compose.override.yml
+data/
+
+# ========== OS ==========
+Thumbs.db
+.DS_Store
+
+# ========== Environment ==========
+.env
+.env.local
+.env.production
