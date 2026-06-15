@@ -31,6 +31,10 @@ class User(AbstractUser):
         verbose_name='锁定解除时间',
         help_text='锁定解除时间',
     )
+    login_fail_count = models.IntegerField(
+        default=0,
+        verbose_name='连续登录失败次数',
+    )
     password_reset_token = models.CharField(
         max_length=128,
         null=True,
