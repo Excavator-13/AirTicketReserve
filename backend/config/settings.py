@@ -24,7 +24,15 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'common',
+    'users',
+    'flights',
+    'orders',
+    'notifications',
+    'refunds',
+    'reschedules',
 ]
+
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
