@@ -142,7 +142,8 @@ function passengerTypeLabel(type) {
 async function loadPassengers() {
   loading.value = true;
   try {
-    passengers.value = await apiFetchPassengers();
+    const data = await apiFetchPassengers();
+    passengers.value = Array.isArray(data) ? data : data.results || [];
   } catch {
     passengers.value = [];
   } finally {

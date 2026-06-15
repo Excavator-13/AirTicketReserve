@@ -51,6 +51,10 @@ class RegisterSerializer(serializers.Serializer):
         validated_data.pop('code')
 
         username = phone or email
+        if not email:
+            email = None
+        if not phone:
+            phone = None
         user = User.objects.create_user(
             username=username,
             phone=phone,
@@ -185,6 +189,8 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(allow_null=True, required=False)
+
     class Meta:
         model = User
         fields = ('id', 'username', 'phone', 'email', 'is_locked', 'date_joined')

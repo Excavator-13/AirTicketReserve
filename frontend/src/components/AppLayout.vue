@@ -158,7 +158,13 @@ function handleCommand(command) {
   if (command === "logout") {
     handleLogout();
   } else {
-    router.push({ name: command.charAt(0).toUpperCase() + command.slice(1) });
+    const routeNameMap = {
+      orders: "OrderList",
+      passengers: "Passengers",
+      notifications: "Notifications",
+    };
+    const name = routeNameMap[command] || command;
+    router.push({ name });
   }
 }
 

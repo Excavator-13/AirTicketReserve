@@ -20,16 +20,11 @@ class Command(BaseCommand):
         count = 0
         for order in expired_orders:
             with transaction.atomic():
+                passenger_count = order.passengers.count()
+                CabinClass.increase_available_seats(order.cabin_class_id, passenger_count)
+
                 order.status = 'CANCELLED'
                 order.save(update_fields=['status', 'updated_at'])
-
-                passenger_count = order.passengers.count()
-                try:
-                    CabinClass.increase_available_seats(order.cabin_class_id, passenger_count)
-                except Exception as e:
-                    self.stdout.write(self.style.WARNING(
-                        f'订单 {order.order_no} 释放库存失败: {e}'
-                    ))
 
                 Notification.objects.create(
                     user=order.user,

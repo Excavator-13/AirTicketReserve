@@ -288,7 +288,8 @@ function removePassenger(index) {
 async function loadFrequentPassengers() {
   frequentLoading.value = true;
   try {
-    frequentPassengers.value = await fetchPassengers();
+    const data = await fetchPassengers();
+    frequentPassengers.value = Array.isArray(data) ? data : data.results || [];
   } catch {
     frequentPassengers.value = [];
   } finally {

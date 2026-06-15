@@ -143,7 +143,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
         with transaction.atomic():
-            payment_no = Payment.generate_payment_no() if hasattr(Payment, 'generate_payment_no') else f'PAY{timezone.now().strftime("%Y%m%d")}{Payment.objects.count() + 1:04d}'
+            payment_no = Payment.generate_payment_no()
             Payment.objects.create(
                 payment_no=payment_no,
                 order=order,

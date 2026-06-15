@@ -5,6 +5,7 @@ from rest_framework import permissions, viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from common.responses import UnifiedResponse
+from common.permissions import IsOwner
 from common.business_exceptions import RateLimitError
 from users.models import User, FrequentPassenger
 from users.serializers import (
@@ -79,6 +80,7 @@ class LoginView(APIView):
             data={
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
+                'user': UserSerializer(user).data,
             },
             msg='登录成功',
         )
@@ -97,6 +99,7 @@ class CodeLoginView(APIView):
             data={
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
+                'user': UserSerializer(user).data,
             },
             msg='登录成功',
         )
@@ -120,7 +123,7 @@ class ResetPasswordView(APIView):
 
 class FrequentPassengerViewSet(viewsets.ModelViewSet):
     serializer_class = FrequentPassengerSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
 
     def get_queryset(self):
         return FrequentPassenger.objects.filter(user=self.request.user)

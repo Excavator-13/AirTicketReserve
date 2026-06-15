@@ -179,11 +179,10 @@ class CabinClass(models.Model):
     def increase_available_seats(cls, cabin_class_id, seat_count):
         with transaction.atomic():
             cabin = cls.objects.select_for_update().get(pk=cabin_class_id)
-            if cabin.available_seats + seat_count > cabin.total_seats:
-                raise SeatsExceedTotalError(
-                    f'回滚超过总座位数：当前 {cabin.available_seats}，回滚 {seat_count}，总座位 {cabin.total_seats}'
-                )
-            cabin.available_seats += seat_count
+            cabin.available_seats = min(
+                cabin.available_seats + seat_count,
+                cabin.total_seats,
+            )
             cabin.save(update_fields=['available_seats'])
         return cabin
 

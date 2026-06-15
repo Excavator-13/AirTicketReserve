@@ -296,3 +296,12 @@ class Payment(models.Model):
 
     def __str__(self):
         return self.payment_no
+
+    @classmethod
+    def generate_payment_no(cls):
+        now = timezone.now()
+        date_str = now.strftime('%Y%m%d')
+        prefix = f'PAY{date_str}'
+        existing_count = cls.objects.filter(payment_no__startswith=prefix).count()
+        seq = str(existing_count + 1).zfill(4)
+        return f'{prefix}{seq}'

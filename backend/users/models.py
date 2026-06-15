@@ -1,10 +1,19 @@
 import uuid
 
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 
 
+class CustomUserManager(UserManager):
+    @classmethod
+    def normalize_email(cls, email):
+        if not email:
+            return None
+        return super().normalize_email(email)
+
+
 class User(AbstractUser):
+    objects = CustomUserManager()
     phone = models.CharField(
         max_length=20,
         unique=True,

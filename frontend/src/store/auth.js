@@ -23,16 +23,24 @@ export const useAuthStore = defineStore("auth", {
       const data = await loginApi(credentials);
       this.accessToken = data.access;
       this.refreshToken = data.refresh;
+      this.user = data.user || null;
       localStorage.setItem("access_token", data.access);
       localStorage.setItem("refresh_token", data.refresh);
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
     },
 
     async codeLogin(payload) {
       const data = await codeLoginApi(payload);
       this.accessToken = data.access;
       this.refreshToken = data.refresh;
+      this.user = data.user || null;
       localStorage.setItem("access_token", data.access);
       localStorage.setItem("refresh_token", data.refresh);
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
     },
 
     async register(payload) {
