@@ -6,6 +6,7 @@ import {
   payOrder,
   refundOrder,
   rescheduleOrder,
+  cancelOrder,
 } from "@/api/orders";
 
 export const useOrderStore = defineStore("order", {
@@ -66,6 +67,10 @@ export const useOrderStore = defineStore("order", {
 
     async rescheduleOrder(id, data) {
       return await rescheduleOrder(id, data);
+    },
+
+    async cancelOrder(id) {
+      return await cancelOrder(id);
     },
   },
 });

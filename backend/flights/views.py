@@ -25,6 +25,7 @@ class CityListView(APIView):
                 code__icontains=keyword
             )
 
+        airports = airports.order_by('code')
         serializer = AirportSerializer(airports, many=True)
         return UnifiedResponse.success(data=serializer.data)
 

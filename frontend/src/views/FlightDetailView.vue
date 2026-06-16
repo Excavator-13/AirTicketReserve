@@ -1,6 +1,6 @@
 <template>
   <div class="flight-detail-page page-container">
-    <div class="container">
+    <div class="container" :class="{ 'has-booking-bar': selectedCabin }">
       <el-button text @click="$router.back()" class="mb-md">
         <el-icon><ArrowLeft /></el-icon> 返回
       </el-button>
@@ -64,6 +64,38 @@
 
             <div class="flight-info__meta" v-if="flight.aircraft_type">
               <span>机型：{{ flight.aircraft_type }}</span>
+            </div>
+
+            <div
+              class="flight-info__stop"
+              v-if="!flight.is_direct && flight.stop_info"
+            >
+              <el-divider />
+              <template
+                v-for="(stop, idx) in Array.isArray(flight.stop_info)
+                  ? flight.stop_info
+                  : [flight.stop_info]"
+                :key="idx"
+              >
+                <div class="flight-info__stop-header">
+                  <el-tag type="warning" size="small">经停</el-tag>
+                  <span class="flight-info__stop-airport">
+                    {{ stop.airport_name || stop.airport }}
+                  </span>
+                </div>
+                <div class="flight-info__stop-details">
+                  <span v-if="stop.arrival_time">
+                    到达 {{ formatTime(stop.arrival_time) }}
+                  </span>
+                  <span v-if="stop.departure_time">
+                    出发 {{ formatTime(stop.departure_time) }}
+                  </span>
+                  <span v-if="stop.duration || stop.duration_minutes">
+                    停留
+                    {{ formatDuration(stop.duration_minutes || stop.duration) }}
+                  </span>
+                </div>
+              </template>
             </div>
           </div>
 
@@ -357,6 +389,32 @@ onMounted(() => {
   margin-top: 12px;
 }
 
+.flight-info__stop {
+  margin-top: 8px;
+}
+
+.flight-info__stop-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.flight-info__stop-airport {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.flight-info__stop-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
 .cabin-card {
   cursor: pointer;
   transition: all 0.2s;
@@ -428,9 +486,12 @@ onMounted(() => {
   padding: 16px 24px;
   background: var(--color-bg-white);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  position: sticky;
-  bottom: 16px;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }
 
 .booking-action__summary {
@@ -441,6 +502,10 @@ onMounted(() => {
 
 .booking-action__summary .price {
   font-size: 24px;
+}
+
+.has-booking-bar {
+  padding-bottom: 80px;
 }
 
 @media (max-width: 768px) {

@@ -19,6 +19,16 @@ export const useFlightStore = defineStore("flight", {
     returnFlights: [],
     currentFlight: null,
     loading: false,
+    searchSortBy: "price",
+    searchFilters: {
+      directOnly: false,
+      airlines: [],
+      departureAirports: [],
+      arrivalAirports: [],
+      aircraftSizes: [],
+      timeRange: [0, 24],
+      arrivalTimeRange: [0, 24],
+    },
   }),
 
   actions: {

@@ -45,7 +45,7 @@
 
             <div
               v-for="(pax, index) in passengers"
-              :key="index"
+              :key="pax._key"
               class="passenger-section"
             >
               <div class="passenger-section__header">
@@ -183,7 +183,7 @@ import { ArrowLeft } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useFlightStore } from "@/store/flight";
 import { useOrderStore } from "@/store/order";
-import { fetchPassengers } from "@/api/passengers";
+import { fetchPassengers, createPassenger } from "@/api/passengers";
 import PassengerForm from "@/components/PassengerForm.vue";
 
 const route = useRoute();
@@ -223,7 +223,13 @@ const cabinTotalPrice = computed(() => {
 });
 
 const passengers = ref([
-  { name: "", id_type: "ID_CARD", id_number: "", passenger_type: "ADULT" },
+  {
+    name: "",
+    id_type: "ID_CARD",
+    id_number: "",
+    passenger_type: "ADULT",
+    _key: crypto.randomUUID(),
+  },
 ]);
 
 const addons = ref({
@@ -278,11 +284,13 @@ function addPassenger() {
     id_type: "ID_CARD",
     id_number: "",
     passenger_type: "ADULT",
+    _key: crypto.randomUUID(),
   });
 }
 
 function removePassenger(index) {
   passengers.value.splice(index, 1);
+  passengerRefs.value.splice(index, 1);
 }
 
 async function loadFrequentPassengers() {
@@ -298,21 +306,33 @@ async function loadFrequentPassengers() {
 }
 
 function selectFrequentPassenger(fp) {
-  passengers.value.push({
+  const emptyIndex = passengers.value.findIndex((p) => !p.name && !p.id_number);
+  const paxData = {
     name: fp.name,
     id_type: fp.id_type,
     id_number: fp.id_number,
     passenger_type: fp.passenger_type,
-  });
+    _key: crypto.randomUUID(),
+  };
+  if (emptyIndex >= 0) {
+    passengers.value[emptyIndex] = paxData;
+    nextTick(() => {
+      passengerRefs.value[emptyIndex]?.fillPassenger?.(paxData);
+    });
+  } else {
+    passengers.value.push(paxData);
+  }
   showFrequentPassengers.value = false;
   ElMessage.success("已添加乘机人");
 }
 
 async function handleSubmit() {
+  await nextTick();
+  const validRefs = passengerRefs.value.filter(Boolean);
   const validations = await Promise.all(
-    passengerRefs.value.map((ref) => ref?.validate?.().catch(() => false)),
+    validRefs.map((ref) => ref?.validate?.().catch(() => false)),
   );
-  if (validations.some((v) => v === false)) {
+  if (validations.some((v) => v !== true)) {
     ElMessage.warning("请完善乘机人信息");
     return;
   }
@@ -340,12 +360,30 @@ async function handleSubmit() {
       passengers: paxData,
       addon_services: addonServices,
     });
+
+    saveFrequentPassengers(paxData);
+
     ElMessage.success("订单创建成功");
     router.push({ name: "OrderDetail", params: { id: order.id } });
   } catch {
   } finally {
     submitting.value = false;
   }
+}
+
+function saveFrequentPassengers(paxData) {
+  const validRefs = passengerRefs.value.filter(Boolean);
+  paxData.forEach((pax, index) => {
+    const ref = validRefs[index];
+    if (ref?.saveAsFrequent?.value && pax.name && pax.id_number) {
+      createPassenger({
+        name: pax.name,
+        id_type: pax.id_type,
+        id_number: pax.id_number,
+        passenger_type: pax.passenger_type,
+      }).catch(() => {});
+    }
+  });
 }
 
 onMounted(async () => {

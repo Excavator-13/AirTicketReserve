@@ -23,3 +23,7 @@ export function refundOrder(id, data) {
 export function rescheduleOrder(id, data) {
   return request.post(`/orders/${id}/reschedule/`, data);
 }
+
+export function cancelOrder(id) {
+  return request.post(`/orders/${id}/cancel/`);
+}

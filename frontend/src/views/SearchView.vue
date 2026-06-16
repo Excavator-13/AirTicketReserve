@@ -247,7 +247,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
 import { ArrowLeft, Filter } from "@element-plus/icons-vue";
 import { useFlightStore } from "@/store/flight";
@@ -257,7 +257,7 @@ const route = useRoute();
 const flightStore = useFlightStore();
 
 const filterDrawerVisible = ref(false);
-const sortBy = ref("price");
+const sortBy = ref(flightStore.searchSortBy || "price");
 
 const AIRCRAFT_SIZE_MAP = {
   small: ["ARJ21", "CRJ900", "ERJ190", "ERJ195", "MA60", "ATR72", "DASH8"],
@@ -305,13 +305,13 @@ function getAircraftSize(aircraftType) {
 }
 
 const filters = ref({
-  directOnly: false,
-  airlines: [],
-  departureAirports: [],
-  arrivalAirports: [],
-  aircraftSizes: [],
-  timeRange: [0, 24],
-  arrivalTimeRange: [0, 24],
+  directOnly: flightStore.searchFilters?.directOnly || false,
+  airlines: flightStore.searchFilters?.airlines || [],
+  departureAirports: flightStore.searchFilters?.departureAirports || [],
+  arrivalAirports: flightStore.searchFilters?.arrivalAirports || [],
+  aircraftSizes: flightStore.searchFilters?.aircraftSizes || [],
+  timeRange: flightStore.searchFilters?.timeRange || [0, 24],
+  arrivalTimeRange: flightStore.searchFilters?.arrivalTimeRange || [0, 24],
 });
 
 const outboundFlights = computed(() => flightStore.outboundFlights);
@@ -447,6 +447,23 @@ watch(
     }
   },
 );
+
+watch(sortBy, (val) => {
+  flightStore.searchSortBy = val;
+});
+
+watch(
+  filters,
+  (val) => {
+    flightStore.searchFilters = { ...val };
+  },
+  { deep: true },
+);
+
+onBeforeUnmount(() => {
+  flightStore.searchSortBy = sortBy.value;
+  flightStore.searchFilters = { ...filters.value };
+});
 </script>
 
 <style scoped>

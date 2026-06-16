@@ -239,6 +239,9 @@ function quickSearch(from, to) {
     tomorrow.setDate(tomorrow.getDate() + 1);
     searchForm.value.date = tomorrow.toISOString().split("T")[0];
   }
+  nextTick(() => {
+    searchFormRef.value?.clearValidate();
+  });
 }
 
 async function handleSearch() {

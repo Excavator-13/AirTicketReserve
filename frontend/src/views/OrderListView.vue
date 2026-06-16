@@ -81,6 +81,14 @@
                 @click="goDetail(order.id)"
                 >去支付</el-button
               >
+              <el-button
+                v-if="order.status === 'PENDING'"
+                type="danger"
+                size="small"
+                plain
+                @click="handleCancelOrder(order.id)"
+                >取消</el-button
+              >
             </div>
           </div>
         </div>
@@ -105,6 +113,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { useOrderStore } from "@/store/order";
 import CountdownTimer from "@/components/CountdownTimer.vue";
 
@@ -163,6 +172,23 @@ async function loadOrders() {
     params.end_date = dateRange.value[1];
   }
   await orderStore.fetchOrders(params);
+}
+
+async function handleCancelOrder(id) {
+  try {
+    await ElMessageBox.confirm("确认取消该订单？", "取消订单", {
+      confirmButtonText: "确认取消",
+      cancelButtonText: "再想想",
+      type: "warning",
+    });
+  } catch {
+    return;
+  }
+  try {
+    await orderStore.cancelOrder(id);
+    ElMessage.success("订单已取消");
+    await loadOrders();
+  } catch {}
 }
 
 onMounted(loadOrders);

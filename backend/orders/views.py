@@ -364,6 +364,34 @@ class OrderViewSet(viewsets.ModelViewSet):
             msg='改签成功',
         )
 
+    @action(detail=True, methods=['post'], url_path='cancel')
+    def cancel(self, request, pk=None):
+        order = self.get_object()
+
+        if order.status != 'PENDING':
+            raise ConflictError(
+                detail=f'该订单状态为 {order.status}，无法取消',
+                data={'status': order.status},
+            )
+
+        with transaction.atomic():
+            order.status = 'CANCELLED'
+            order.save(update_fields=['status', 'updated_at'])
+
+            CabinClass.increase_available_seats(order.cabin_class_id, order.passengers.count())
+
+        Notification.objects.create(
+            user=order.user,
+            title='订单已取消',
+            content=f'您的订单 {order.order_no} 已取消，舱位库存已释放。',
+            related_order=order,
+        )
+
+        return UnifiedResponse.success(
+            data={'order_no': order.order_no, 'status': order.status},
+            msg='订单已取消',
+        )
+
     def destroy(self, request, *args, **kwargs):
         return UnifiedResponse.error(msg='不允许删除订单', code=403)
 

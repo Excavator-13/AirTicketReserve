@@ -1,6 +1,6 @@
 <template>
   <div class="reschedule-page page-container">
-    <div class="container">
+    <div class="container" :class="{ 'has-floating-bar': selectedNewCabin }">
       <el-button text @click="$router.back()" class="mb-md">
         <el-icon><ArrowLeft /></el-icon> 返回
       </el-button>
@@ -194,7 +194,11 @@
             </div>
           </div>
 
-          <div class="reschedule-action" v-if="selectedNewCabin">
+          <div
+            class="reschedule-action"
+            v-if="selectedNewCabin"
+            ref="priceSectionRef"
+          >
             <el-button
               type="primary"
               size="large"
@@ -205,12 +209,26 @@
           </div>
         </template>
       </div>
+
+      <div
+        class="floating-reschedule-bar"
+        v-if="selectedNewCabin && newFlights.length > 3"
+      >
+        <el-button
+          :type="scrolledToBottom ? 'success' : 'primary'"
+          size="large"
+          :loading="submitting"
+          @click="handleFloatingConfirm"
+        >
+          {{ scrolledToBottom ? "确认改签" : "查看费用并确认" }}
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ArrowLeft } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -230,6 +248,8 @@ const newFlights = ref([]);
 const selectedNewFlight = ref(null);
 const selectedNewCabin = ref(null);
 const submitting = ref(false);
+const priceSectionRef = ref(null);
+const scrolledToBottom = ref(false);
 
 const order = computed(() => orderStore.currentOrder);
 
@@ -380,8 +400,31 @@ async function handleReschedule() {
   }
 }
 
+function checkScrollPosition() {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  const windowHeight = window.innerHeight;
+  const docHeight = document.documentElement.scrollHeight;
+  scrolledToBottom.value = scrollTop + windowHeight >= docHeight - 100;
+}
+
+function handleFloatingConfirm() {
+  if (!scrolledToBottom.value) {
+    priceSectionRef.value?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    return;
+  }
+  handleReschedule();
+}
+
 onMounted(() => {
   orderStore.fetchOrderDetail(route.params.id);
+  window.addEventListener("scroll", checkScrollPosition, { passive: true });
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", checkScrollPosition);
 });
 </script>
 
@@ -475,6 +518,26 @@ onMounted(() => {
 .reschedule-action {
   text-align: center;
   margin-top: 24px;
+}
+
+.floating-reschedule-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 24px;
+  background: var(--color-bg-white);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  text-align: center;
+}
+
+.floating-reschedule-bar .el-button {
+  min-width: 200px;
+}
+
+.has-floating-bar {
+  padding-bottom: 80px;
 }
 
 @media (max-width: 768px) {

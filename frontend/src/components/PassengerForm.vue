@@ -37,6 +37,10 @@
           <el-option label="婴儿" value="INFANT" />
         </el-select>
       </el-form-item>
+
+      <el-form-item>
+        <el-checkbox v-model="saveAsFrequent" label="保存为常用乘机人" />
+      </el-form-item>
     </el-form>
   </div>
 </template>
@@ -51,6 +55,7 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue"]);
 
 const formRef = ref(null);
+const saveAsFrequent = ref(false);
 
 const form = ref({
   name: props.modelValue?.name || "",
@@ -128,5 +133,5 @@ function getFormData() {
   return { ...form.value };
 }
 
-defineExpose({ validate, getFormData, fillPassenger });
+defineExpose({ validate, getFormData, fillPassenger, saveAsFrequent });
 </script>

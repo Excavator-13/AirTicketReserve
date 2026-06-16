@@ -29,11 +29,29 @@
               finish-status="success"
               simple
               class="mt-md"
-              v-if="['PENDING', 'PAID', 'TICKETED'].includes(order.status)"
+              v-if="
+                [
+                  'PENDING',
+                  'PAID',
+                  'TICKETED',
+                  'REFUNDED',
+                  'CANCELLED',
+                ].includes(order.status)
+              "
             >
-              <el-step title="待支付" />
-              <el-step title="已支付" />
-              <el-step title="已出票" />
+              <el-step title="待支付" :status="stepStatus(0)" />
+              <el-step title="已支付" :status="stepStatus(1)" />
+              <el-step title="已出票" :status="stepStatus(2)" />
+              <el-step
+                v-if="order.status === 'REFUNDED'"
+                title="已退票"
+                status="success"
+              />
+              <el-step
+                v-if="order.status === 'CANCELLED'"
+                title="已取消"
+                status="error"
+              />
             </el-steps>
           </div>
 
@@ -169,6 +187,15 @@
             >
 
             <el-button
+              v-if="order.status === 'PENDING'"
+              type="danger"
+              size="large"
+              @click="handleCancel"
+              :loading="cancelling"
+              >取消订单</el-button
+            >
+
+            <el-button
               v-if="order.status === 'TICKETED' && order.can_refund"
               type="warning"
               @click="
@@ -198,7 +225,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { ArrowLeft } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -209,6 +236,7 @@ const route = useRoute();
 const orderStore = useOrderStore();
 
 const paying = ref(false);
+const cancelling = ref(false);
 
 const order = computed(() => orderStore.currentOrder);
 
@@ -219,6 +247,12 @@ const statusStep = computed(() => {
   if (s === "TICKETED") return 2;
   return 0;
 });
+
+function stepStatus(index) {
+  if (index < statusStep.value) return "success";
+  if (index === statusStep.value) return "success";
+  return "wait";
+}
 
 function statusLabel(status) {
   const map = {
@@ -315,9 +349,44 @@ async function handlePay() {
   }
 }
 
+async function handleCancel() {
+  try {
+    await ElMessageBox.confirm(
+      "确认取消该订单？取消后舱位库存将释放。",
+      "取消订单",
+      {
+        confirmButtonText: "确认取消",
+        cancelButtonText: "再想想",
+        type: "warning",
+      },
+    );
+  } catch {
+    return;
+  }
+
+  cancelling.value = true;
+  try {
+    await orderStore.cancelOrder(order.value.id);
+    ElMessage.success("订单已取消");
+    await refreshOrder();
+  } catch {
+  } finally {
+    cancelling.value = false;
+  }
+}
+
 onMounted(() => {
   orderStore.fetchOrderDetail(route.params.id);
 });
+
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) {
+      orderStore.fetchOrderDetail(newId);
+    }
+  },
+);
 </script>
 
 <style scoped>
