@@ -6,6 +6,8 @@ export const useFlightStore = defineStore("flight", {
     searchParams: {
       departure_city: "",
       arrival_city: "",
+      departure_airport_code: "",
+      arrival_airport_code: "",
       date: "",
       is_round_trip: false,
       return_date: "",

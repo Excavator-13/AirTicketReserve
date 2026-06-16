@@ -31,7 +31,7 @@
                 :fetch-suggestions="queryCities"
                 placeholder="请输入出发城市"
                 clearable
-                @select="(item) => (searchForm.departure_city = item.city)"
+                @select="onDepartureSelect"
               />
             </el-form-item>
 
@@ -49,7 +49,7 @@
                 :fetch-suggestions="queryCities"
                 placeholder="请输入到达城市"
                 clearable
-                @select="(item) => (searchForm.arrival_city = item.city)"
+                @select="onArrivalSelect"
               />
             </el-form-item>
           </div>
@@ -143,7 +143,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { Sort, Right } from "@element-plus/icons-vue";
 import { useFlightStore } from "@/store/flight";
@@ -157,6 +157,8 @@ const loading = ref(false);
 const searchForm = ref({
   departure_city: "",
   arrival_city: "",
+  departure_airport_code: "",
+  arrival_airport_code: "",
   date: "",
   is_round_trip: false,
   return_date: "",
@@ -202,20 +204,41 @@ async function queryCities(queryString, cb) {
 }
 
 function swapCities() {
-  const temp = searchForm.value.departure_city;
+  const tempCity = searchForm.value.departure_city;
+  const tempCode = searchForm.value.departure_airport_code;
   searchForm.value.departure_city = searchForm.value.arrival_city;
-  searchForm.value.arrival_city = temp;
+  searchForm.value.departure_airport_code =
+    searchForm.value.arrival_airport_code;
+  searchForm.value.arrival_city = tempCity;
+  searchForm.value.arrival_airport_code = tempCode;
+}
+
+function onDepartureSelect(item) {
+  searchForm.value.departure_city = item.city;
+  searchForm.value.departure_airport_code = item.code || "";
+  nextTick(() => {
+    searchFormRef.value?.clearValidate("departure_city");
+  });
+}
+
+function onArrivalSelect(item) {
+  searchForm.value.arrival_city = item.city;
+  searchForm.value.arrival_airport_code = item.code || "";
+  nextTick(() => {
+    searchFormRef.value?.clearValidate("arrival_city");
+  });
 }
 
 function quickSearch(from, to) {
   searchForm.value.departure_city = from;
   searchForm.value.arrival_city = to;
+  searchForm.value.departure_airport_code = "";
+  searchForm.value.arrival_airport_code = "";
   if (!searchForm.value.date) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     searchForm.value.date = tomorrow.toISOString().split("T")[0];
   }
-  handleSearch();
 }
 
 async function handleSearch() {

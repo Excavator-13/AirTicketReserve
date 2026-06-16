@@ -51,7 +51,7 @@ class FlightListSerializer(serializers.ModelSerializer):
             'id', 'flight_no', 'airline',
             'departure_airport', 'arrival_airport',
             'departure_time', 'arrival_time',
-            'duration_minutes', 'is_direct', 'min_price', 'cabins',
+            'duration_minutes', 'is_direct', 'aircraft_type', 'min_price', 'cabins',
         )
 
     def get_duration_minutes(self, obj):
