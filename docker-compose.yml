@@ -1,4 +1,26 @@
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: airticket-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-airticket}
+      POSTGRES_USER: ${POSTGRES_USER:-airticket}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airticket_dev_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-airticket} -d ${POSTGRES_DB:-airticket}",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - airticket-network
+
   backend:
     build:
       context: ./backend
@@ -9,8 +31,17 @@ services:
       - ./backend:/app
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
-      - DJANGO_DEBUG=True
-      - DJANGO_SECRET_KEY=django-insecure-dev-key-change-in-production
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-True}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-insecure-dev-key-change-in-production}
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=${POSTGRES_DB:-airticket}
+      - DB_USER=${POSTGRES_USER:-airticket}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-airticket_dev_password}
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/"]
       interval: 10s
@@ -35,6 +66,9 @@ services:
       - API_PROXY_TARGET=http://backend:8000
     networks:
       - airticket-network
+
+volumes:
+  postgres_data:
 
 networks:
   airticket-network:
