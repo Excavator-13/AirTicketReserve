@@ -212,15 +212,15 @@
 
       <div
         class="floating-reschedule-bar"
-        v-if="selectedNewCabin && newFlights.length > 3"
+        v-if="selectedNewCabin && newFlights.length > 3 && !scrolledToBottom"
       >
         <el-button
-          :type="scrolledToBottom ? 'success' : 'primary'"
+          type="primary"
           size="large"
           :loading="submitting"
           @click="handleFloatingConfirm"
         >
-          {{ scrolledToBottom ? "确认改签" : "查看费用并确认" }}
+          查看费用并确认
         </el-button>
       </div>
     </div>
@@ -408,14 +408,11 @@ function checkScrollPosition() {
 }
 
 function handleFloatingConfirm() {
-  if (!scrolledToBottom.value) {
-    priceSectionRef.value?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-    return;
-  }
-  handleReschedule();
+  priceSectionRef.value?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+  scrolledToBottom.value = true;
 }
 
 onMounted(() => {

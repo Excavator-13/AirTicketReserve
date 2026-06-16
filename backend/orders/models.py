@@ -112,7 +112,7 @@ class Order(models.Model):
 
             if addon_services_data:
                 for svc in addon_services_data:
-                    total_amount += Decimal(str(svc.get('price', 0)))
+                    total_amount += Decimal(str(svc.get('price', 0))) * len(passengers_data)
 
             order = cls.objects.create(
                 order_no=cls.generate_order_no(),

@@ -361,7 +361,7 @@ async function handleSubmit() {
       addon_services: addonServices,
     });
 
-    saveFrequentPassengers(paxData);
+    await saveFrequentPassengers(paxData);
 
     ElMessage.success("订单创建成功");
     router.push({ name: "OrderDetail", params: { id: order.id } });
@@ -371,19 +371,23 @@ async function handleSubmit() {
   }
 }
 
-function saveFrequentPassengers(paxData) {
+async function saveFrequentPassengers(paxData) {
   const validRefs = passengerRefs.value.filter(Boolean);
+  const promises = [];
   paxData.forEach((pax, index) => {
     const ref = validRefs[index];
     if (ref?.saveAsFrequent?.value && pax.name && pax.id_number) {
-      createPassenger({
-        name: pax.name,
-        id_type: pax.id_type,
-        id_number: pax.id_number,
-        passenger_type: pax.passenger_type,
-      }).catch(() => {});
+      promises.push(
+        createPassenger({
+          name: pax.name,
+          id_type: pax.id_type,
+          id_number: pax.id_number,
+          passenger_type: pax.passenger_type,
+        }).catch(() => {}),
+      );
     }
   });
+  await Promise.all(promises);
 }
 
 onMounted(async () => {

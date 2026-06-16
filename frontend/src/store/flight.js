@@ -19,6 +19,7 @@ export const useFlightStore = defineStore("flight", {
     returnFlights: [],
     currentFlight: null,
     loading: false,
+    searchId: null,
     searchSortBy: "price",
     searchFilters: {
       directOnly: false,
@@ -35,6 +36,17 @@ export const useFlightStore = defineStore("flight", {
     async searchFlights(params) {
       this.loading = true;
       this.searchParams = { ...this.searchParams, ...params };
+      this.searchId = Date.now();
+      this.searchSortBy = "price";
+      this.searchFilters = {
+        directOnly: false,
+        airlines: [],
+        departureAirports: [],
+        arrivalAirports: [],
+        aircraftSizes: [],
+        timeRange: [0, 24],
+        arrivalTimeRange: [0, 24],
+      };
       try {
         const data = await searchFlights(params);
         this.outboundFlights = data.outbound || [];

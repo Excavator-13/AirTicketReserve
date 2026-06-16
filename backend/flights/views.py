@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework import permissions
 
@@ -18,11 +19,9 @@ class CityListView(APIView):
             airports = Airport.objects.all()[:20]
         else:
             airports = Airport.objects.filter(
-                city__icontains=keyword
-            ) | Airport.objects.filter(
-                name__icontains=keyword
-            ) | Airport.objects.filter(
-                code__icontains=keyword
+                Q(city__icontains=keyword)
+                | Q(name__icontains=keyword)
+                | Q(code__icontains=keyword)
             )
 
         airports = airports.order_by('code')

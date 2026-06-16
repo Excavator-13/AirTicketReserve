@@ -156,8 +156,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             order.status = 'PAID'
             order.save(update_fields=['status', 'updated_at'])
 
-            for passenger in order.passengers.all():
-                ticket_no = f'TKT{timezone.now().strftime("%Y%m%d")}{Passenger.objects.count() + 1:06d}'
+            base_count = Passenger.objects.count()
+            for idx, passenger in enumerate(order.passengers.all()):
+                ticket_no = f'TKT{timezone.now().strftime("%Y%m%d")}{base_count + idx + 1:06d}'
                 passenger.ticket_no = ticket_no
                 passenger.save(update_fields=['ticket_no'])
 
@@ -236,11 +237,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 total_fee += fee
                 refunded_passengers.append(passenger.name)
 
-            all_refunded = all(
-                p.status in ('REFUNDED', 'RESCHEDULED')
-                for p in order.passengers.all()
-            )
-            if all_refunded:
+            has_active = Passenger.objects.filter(
+                order=order
+            ).exclude(
+                status__in=['REFUNDED', 'RESCHEDULED']
+            ).exists()
+            if not has_active:
                 order.status = 'REFUNDED'
                 order.save(update_fields=['status', 'updated_at'])
 
@@ -336,15 +338,18 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
             passenger.status = 'RESCHEDULED'
-            passenger.save(update_fields=['status'])
+            if passenger.ticket_no:
+                passenger.ticket_no = passenger.ticket_no + '-VOID'
+            passenger.save(update_fields=['status', 'ticket_no'])
 
+            new_ticket_no = f'TKT{timezone.now().strftime("%Y%m%d")}{Passenger.objects.count() + 1:06d}'
             new_passenger = Passenger.objects.create(
                 order=order,
                 name=passenger.name,
                 id_type=passenger.id_type,
                 id_number=passenger.id_number,
                 passenger_type=passenger.passenger_type,
-                ticket_no=f'TKT{timezone.now().strftime("%Y%m%d")}{Passenger.objects.count() + 1:06d}',
+                ticket_no=new_ticket_no,
                 status='NORMAL',
             )
 

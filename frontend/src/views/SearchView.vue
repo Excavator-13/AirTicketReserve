@@ -257,7 +257,7 @@ const route = useRoute();
 const flightStore = useFlightStore();
 
 const filterDrawerVisible = ref(false);
-const sortBy = ref(flightStore.searchSortBy || "price");
+const sortBy = ref("price");
 
 const AIRCRAFT_SIZE_MAP = {
   small: ["ARJ21", "CRJ900", "ERJ190", "ERJ195", "MA60", "ATR72", "DASH8"],
@@ -305,13 +305,13 @@ function getAircraftSize(aircraftType) {
 }
 
 const filters = ref({
-  directOnly: flightStore.searchFilters?.directOnly || false,
-  airlines: flightStore.searchFilters?.airlines || [],
-  departureAirports: flightStore.searchFilters?.departureAirports || [],
-  arrivalAirports: flightStore.searchFilters?.arrivalAirports || [],
-  aircraftSizes: flightStore.searchFilters?.aircraftSizes || [],
-  timeRange: flightStore.searchFilters?.timeRange || [0, 24],
-  arrivalTimeRange: flightStore.searchFilters?.arrivalTimeRange || [0, 24],
+  directOnly: false,
+  airlines: [],
+  departureAirports: [],
+  arrivalAirports: [],
+  aircraftSizes: [],
+  timeRange: [0, 24],
+  arrivalTimeRange: [0, 24],
 });
 
 const outboundFlights = computed(() => flightStore.outboundFlights);
@@ -430,11 +430,36 @@ function initFiltersFromRoute() {
   }
 }
 
+function restoreFromStore() {
+  const sp = flightStore.searchParams;
+  const rq = route.query;
+  const isSameSearch =
+    sp.departure_city === rq.departure_city &&
+    sp.arrival_city === rq.arrival_city &&
+    sp.date === rq.date &&
+    flightStore.outboundFlights.length > 0;
+
+  if (isSameSearch) {
+    sortBy.value = flightStore.searchSortBy || "price";
+    filters.value = { ...filters.value, ...flightStore.searchFilters };
+  }
+}
+
 onMounted(async () => {
   const params = { ...route.query };
   if (params.departure_city) {
-    await flightStore.searchFlights(params);
-    initFiltersFromRoute();
+    const hasCachedResults =
+      flightStore.searchParams.departure_city === params.departure_city &&
+      flightStore.searchParams.arrival_city === params.arrival_city &&
+      flightStore.searchParams.date === params.date &&
+      flightStore.outboundFlights.length > 0;
+
+    if (hasCachedResults) {
+      restoreFromStore();
+    } else {
+      await flightStore.searchFlights(params);
+      initFiltersFromRoute();
+    }
   }
 });
 
