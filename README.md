@@ -1,37 +1,48 @@
-# 机票预约平台 MVP
+# ✈️ 机票预约平台 MVP
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
+[![Vue 3](https://img.shields.io/badge/Vue-3.5-green.svg)](https://vuejs.org/)
+[![Django 4.x](https://img.shields.io/badge/Django-4.x-green.svg)](https://www.djangoproject.com/)
 
 一个功能完整的机票预约平台 MVP，支持航班搜索、在线预订、模拟支付、退票与改签，前后端分离架构，Docker 一键部署。
 
 ## 技术栈
 
-| 层级   | 技术                                             |
-| ------ | ------------------------------------------------ |
-| 前端   | Vue 3 + Vite + Vue Router + Pinia + Element Plus |
-| 后端   | Django 4.x + Django REST Framework + SimpleJWT   |
-| 数据库 | SQLite（开发环境，可切换 PostgreSQL）            |
-| 部署   | Docker + Docker Compose                          |
+| 层级   | 技术                                             | 版本          |
+| ------ | ------------------------------------------------ | ------------- |
+| 前端   | Vue 3 + Vite + Vue Router + Pinia + Element Plus | Node 18       |
+| 后端   | Django 4.x + Django REST Framework + SimpleJWT   | Python 3.10   |
+| 数据库 | PostgreSQL（Docker）/ SQLite（本地开发）         | PG 15-alpine  |
+| 部署   | Docker + Docker Compose                          | Compose v2.0+ |
 
 ## 功能概览
 
-- **用户认证**：手机号/邮箱注册、账号密码登录、验证码登录、密码重置、连续错误锁定
-- **航班搜索**：出发地/目的地模糊搜索、单程/往返、乘客人数、筛选排序
-- **航班详情**：舱位选择、退改签规则、行李额度、价格分项
-- **在线预订**：乘机人信息填写、常用乘机人、附加服务、库存锁定、30 分钟支付倒计时
-- **模拟支付**：支付金额校验、自动出票、防重复支付
-- **退票**：按退票规则计算手续费、自动审核通过、库存回滚
-- **改签**：搜索新航班、计算差价与手续费、生成新票
-- **订单管理**：订单列表/详情、状态筛选、支付倒计时
-- **消息通知**：站内通知、出票/退票/改签/超时取消通知
-- **超时取消**：Django 管理命令 + crontab 定时扫描超时未支付订单
+| 模块        | 功能                                                              |
+| ----------- | ----------------------------------------------------------------- |
+| 🔐 用户认证 | 手机号/邮箱注册、账号密码登录、验证码登录、密码重置、连续错误锁定 |
+| 🔍 航班搜索 | 出发地/目的地模糊搜索、单程/往返、乘客人数、筛选排序              |
+| 📋 航班详情 | 舱位选择、退改签规则、行李额度、价格分项                          |
+| 📝 在线预订 | 乘机人信息填写、常用乘机人、附加服务、库存锁定、30 分钟支付倒计时 |
+| 💳 模拟支付 | 支付金额校验、自动出票、防重复支付                                |
+| ↩️ 退票     | 按退票规则计算手续费、自动审核通过、库存回滚                      |
+| 🔄 改签     | 搜索新航班、计算差价与手续费、生成新票                            |
+| 📦 订单管理 | 订单列表/详情、状态筛选、支付倒计时                               |
+| 🔔 消息通知 | 站内通知、出票/退票/改签/超时取消通知                             |
+| ⏰ 超时取消 | Django 管理命令 + crontab 定时扫描超时未支付订单                  |
 
 ## 快速启动
 
 ### 环境要求
 
-- Docker >= 20.10
-- Docker Compose >= 2.0
+| 工具           | 最低版本 |
+| -------------- | -------- |
+| Docker         | >= 20.10 |
+| Docker Compose | >= 2.0   |
 
-### 一键启动
+> 💡 本地开发（不使用 Docker）需要 Python 3.10+ 和 Node 18+
+
+### 一键启动（Docker）
 
 ```bash
 # 克隆项目
@@ -44,8 +55,11 @@ docker compose up --build
 
 启动完成后访问：
 
-- 前端：http://localhost:5173
-- 后端 API：http://localhost:8000/api/v1/
+| 服务       | 地址                          |
+| ---------- | ----------------------------- |
+| 前端       | http://localhost:5173         |
+| 后端 API   | http://localhost:8000/api/v1/ |
+| PostgreSQL | localhost:5432（容器内）      |
 
 ### 演示流程
 
@@ -64,7 +78,9 @@ docker compose up --build
 
 ## 本地开发（不使用 Docker）
 
-### 后端
+### 本地开发（不使用 Docker）
+
+#### 后端
 
 ```bash
 cd backend
@@ -76,13 +92,28 @@ python manage.py loaddata initial_data
 python manage.py runserver
 ```
 
-### 前端
+#### 前端
 
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+
+### 环境变量
+
+Docker Compose 通过环境变量配置服务，默认值已内置于 `docker-compose.yml`，开箱即用。如需自定义，可在项目根目录创建 `.env` 文件：
+
+| 变量                   | 默认值                                         | 说明                            |
+| ---------------------- | ---------------------------------------------- | ------------------------------- |
+| `POSTGRES_DB`          | `airticket`                                    | PostgreSQL 数据库名             |
+| `POSTGRES_USER`        | `airticket`                                    | PostgreSQL 用户名               |
+| `POSTGRES_PASSWORD`    | `airticket_dev_password`                       | PostgreSQL 密码                 |
+| `DJANGO_DEBUG`         | `True`                                         | Django 调试模式                 |
+| `DJANGO_SECRET_KEY`    | `django-insecure-dev-key-change-in-production` | Django 密钥（生产环境务必修改） |
+| `DJANGO_ALLOWED_HOSTS` | `*`                                            | 允许的主机头                    |
+
+> ⚠️ **生产环境部署**：务必修改 `DJANGO_SECRET_KEY` 和 `POSTGRES_PASSWORD`，并将 `DJANGO_DEBUG` 设为 `False`。
 
 ## 超时取消定时任务
 
@@ -138,63 +169,96 @@ crontab -e
 
 ```
 AirTicketReserve/
-├── backend/                    # Django 后端
-│   ├── config/                 # 项目配置
-│   │   ├── settings.py
-│   │   ├── urls.py
-│   │   └── wsgi.py
-│   ├── common/                 # 公共模块
-│   │   ├── responses.py        # 统一响应格式
-│   │   ├── renderers.py        # 统一渲染器
-│   │   ├── pagination.py       # 分页
-│   │   ├── exceptions.py       # 异常处理
-│   │   ├── permissions.py      # 权限
+├── backend/                        # Django 后端
+│   ├── config/                     # 项目配置
+│   │   ├── settings.py             # 主配置（支持环境变量切换数据库）
+│   │   ├── urls.py                 # 根路由
+│   │   ├── wsgi.py
+│   │   └── asgi.py
+│   ├── common/                     # 公共模块
+│   │   ├── responses.py            # 统一响应格式
+│   │   ├── renderers.py            # 统一渲染器
+│   │   ├── pagination.py           # 分页
+│   │   ├── exceptions.py           # 异常处理
+│   │   ├── permissions.py          # 权限
+│   │   ├── viewsets.py             # 通用 ViewSet
 │   │   └── business_exceptions.py  # 业务异常
-│   ├── users/                  # 用户模块
-│   ├── flights/                # 航班模块
-│   │   └── fixtures/           # 初始数据
-│   │       └── initial_data.json
-│   ├── orders/                 # 订单模块
+│   ├── users/                      # 用户模块（注册/登录/乘机人）
+│   ├── flights/                    # 航班模块（搜索/详情/城市）
+│   │   └── fixtures/
+│   │       └── initial_data.json   # 预置数据
+│   ├── orders/                     # 订单模块（创建/支付/详情）
 │   │   └── management/commands/
 │   │       └── cancel_expired_orders.py
-│   ├── notifications/          # 通知模块
-│   ├── refunds/                # 退票模块
-│   ├── reschedules/            # 改签模块
+│   ├── notifications/              # 通知模块
+│   ├── refunds/                    # 退票模块
+│   ├── reschedules/                # 改签模块
 │   ├── Dockerfile
 │   └── requirements.txt
-├── frontend/                   # Vue 前端
+├── frontend/                       # Vue 前端
 │   ├── src/
-│   │   ├── api/                # API 封装
-│   │   ├── components/         # 公共组件
-│   │   ├── router/             # 路由配置
-│   │   ├── store/              # Pinia 状态管理
-│   │   ├── styles/             # 全局样式
-│   │   └── views/              # 页面组件
+│   │   ├── api/                    # API 封装
+│   │   │   ├── auth.js             # 认证接口
+│   │   │   ├── flights.js          # 航班接口
+│   │   │   ├── orders.js           # 订单接口
+│   │   │   ├── passengers.js       # 乘机人接口
+│   │   │   └── notifications.js    # 通知接口
+│   │   ├── components/             # 公共组件
+│   │   │   ├── AppLayout.vue       # 布局组件
+│   │   │   ├── CountdownTimer.vue  # 倒计时组件
+│   │   │   ├── FlightCard.vue      # 航班卡片
+│   │   │   └── PassengerForm.vue   # 乘机人表单
+│   │   ├── router/                 # 路由配置
+│   │   ├── store/                  # Pinia 状态管理
+│   │   │   ├── auth.js             # 认证状态
+│   │   │   ├── flight.js           # 航班状态
+│   │   │   ├── order.js            # 订单状态
+│   │   │   └── notification.js     # 通知状态
+│   │   ├── styles/                 # 全局样式
+│   │   └── views/                  # 页面组件（13 个视图）
 │   ├── Dockerfile
 │   └── package.json
-├── docker-compose.yml
+├── docker-compose.yml              # Docker 编排（PostgreSQL + Backend + Frontend）
 └── README.md
 ```
 
 ## API 概览
 
-| 端点                              | 方法     | 说明                 |
-| --------------------------------- | -------- | -------------------- |
-| `/api/v1/auth/register/`          | POST     | 用户注册             |
-| `/api/v1/auth/login/`             | POST     | 账号密码登录         |
-| `/api/v1/auth/login/code/`        | POST     | 验证码登录           |
-| `/api/v1/auth/code/`              | POST     | 发送验证码           |
-| `/api/v1/auth/reset-password/`    | POST     | 重置密码             |
-| `/api/v1/flights/cities/`         | GET      | 城市列表（模糊搜索） |
-| `/api/v1/flights/search/`         | GET      | 航班搜索             |
-| `/api/v1/flights/{id}/`           | GET      | 航班详情             |
-| `/api/v1/orders/`                 | GET/POST | 订单列表/创建        |
-| `/api/v1/orders/{id}/`            | GET      | 订单详情             |
-| `/api/v1/orders/{id}/pay/`        | POST     | 支付                 |
-| `/api/v1/orders/{id}/refund/`     | POST     | 退票                 |
-| `/api/v1/orders/{id}/reschedule/` | POST     | 改签                 |
-| `/api/v1/passengers/`             | GET/POST | 常用乘机人           |
-| `/api/v1/notifications/`          | GET      | 通知列表             |
+### 认证模块
+
+| 端点                           | 方法 | 说明         | 鉴权 |
+| ------------------------------ | ---- | ------------ | ---- |
+| `/api/v1/auth/register/`       | POST | 用户注册     | ❌   |
+| `/api/v1/auth/login/`          | POST | 账号密码登录 | ❌   |
+| `/api/v1/auth/login/code/`     | POST | 验证码登录   | ❌   |
+| `/api/v1/auth/code/`           | POST | 发送验证码   | ❌   |
+| `/api/v1/auth/reset-password/` | POST | 重置密码     | ❌   |
+
+### 航班模块
+
+| 端点                      | 方法 | 说明                 | 鉴权 |
+| ------------------------- | ---- | -------------------- | ---- |
+| `/api/v1/flights/cities/` | GET  | 城市列表（模糊搜索） | ❌   |
+| `/api/v1/flights/search/` | GET  | 航班搜索             | ❌   |
+| `/api/v1/flights/{id}/`   | GET  | 航班详情             | ❌   |
+
+### 订单模块
+
+| 端点                              | 方法     | 说明          | 鉴权 |
+| --------------------------------- | -------- | ------------- | ---- |
+| `/api/v1/orders/`                 | GET/POST | 订单列表/创建 | ✅   |
+| `/api/v1/orders/{id}/`            | GET      | 订单详情      | ✅   |
+| `/api/v1/orders/{id}/pay/`        | POST     | 模拟支付      | ✅   |
+| `/api/v1/orders/{id}/refund/`     | POST     | 申请退票      | ✅   |
+| `/api/v1/orders/{id}/reschedule/` | POST     | 申请改签      | ✅   |
+
+### 乘机人 & 通知
+
+| 端点                       | 方法       | 说明                | 鉴权 |
+| -------------------------- | ---------- | ------------------- | ---- |
+| `/api/v1/passengers/`      | GET/POST   | 常用乘机人列表/添加 | ✅   |
+| `/api/v1/passengers/{id}/` | PUT/DELETE | 修改/删除乘机人     | ✅   |
+| `/api/v1/notifications/`   | GET        | 通知列表            | ✅   |
 
 所有 API 返回统一 JSON 格式：
 
@@ -209,16 +273,33 @@ AirTicketReserve/
 ## 核心业务流程
 
 ```
-注册 → 登录 → 搜索航班 → 查看详情 → 预订(锁库存) → 支付(出票) → 退票/改签
-                                              ↓
-                                     超时未支付 → 自动取消(释放库存)
+┌─────────┐    ┌─────────┐    ┌──────────┐    ┌──────────┐    ┌───────────────┐
+│  注册    │───▶│  登录    │───▶│ 搜索航班 │───▶│ 查看详情 │───▶│ 预订(锁库存) │
+└─────────┘    └─────────┘    └──────────┘    └──────────┘    └───────┬───────┘
+                                                                      │
+                                              ┌───────────────────────┤
+                                              ▼                       ▼
+                                     ┌──────────────┐        ┌──────────────┐
+                                     │ 支付(出票)   │        │ 超时未支付   │
+                                     └──────┬───────┘        └──────┬───────┘
+                                            │                       │
+                              ┌─────────────┤              ┌────────┘
+                              ▼             ▼              ▼
+                        ┌──────────┐ ┌──────────┐  ┌──────────────────┐
+                        │   退票   │ │  改签    │  │ 自动取消(释放库存)│
+                        └──────────┘ └──────────┘  └──────────────────┘
 ```
 
-- **库存锁定**：创建订单时通过 `select_for_update()` 行级锁保证并发安全
-- **支付校验**：后端校验支付金额与订单金额一致，防止篡改
-- **退票计算**：根据舱位退票规则阶梯计算手续费
-- **改签计算**：改签手续费 + 票价差价，支持补交和退还
-- **超时取消**：`cancel_expired_orders` 命令扫描超时订单，回滚库存并发送通知
+### 关键机制
+
+| 机制     | 实现方式                                                     |
+| -------- | ------------------------------------------------------------ |
+| 库存锁定 | 创建订单时通过 `select_for_update()` 行级锁保证并发安全      |
+| 支付校验 | 后端校验支付金额与订单金额一致，防止篡改                     |
+| 退票计算 | 根据舱位退票规则阶梯计算手续费                               |
+| 改签计算 | 改签手续费 + 票价差价，支持补交和退还                        |
+| 超时取消 | `cancel_expired_orders` 命令扫描超时订单，回滚库存并发送通知 |
+| 鉴权方式 | JWT（Access Token 30min + Refresh Token 1d）                 |
 
 ## License
 
