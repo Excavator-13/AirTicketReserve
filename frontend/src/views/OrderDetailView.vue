@@ -119,6 +119,39 @@
                   {{ passengerTypeLabel(row.passenger_type) }}
                 </template>
               </el-table-column>
+              <el-table-column label="航班号" min-width="90">
+                <template #default="{ row }">
+                  <span
+                    v-if="row.flight_no && row.flight_no !== order.flight_no"
+                  >
+                    <el-tag type="warning" size="small" class="mr-sm"
+                      >改签</el-tag
+                    >
+                    {{ row.flight_no }}
+                  </span>
+                  <span v-else>{{ row.flight_no || order.flight_no }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="舱位" min-width="70">
+                <template #default="{ row }">
+                  <span
+                    v-if="
+                      row.cabin_class_type &&
+                      row.cabin_class_type !== order.cabin_info?.class_type
+                    "
+                  >
+                    <el-tag type="warning" size="small" class="mr-sm"
+                      >改签</el-tag
+                    >
+                    {{ cabinTypeLabel(row.cabin_class_type) }}
+                  </span>
+                  <span v-else>{{
+                    cabinTypeLabel(
+                      row.cabin_class_type || order.cabin_info?.class_type,
+                    )
+                  }}</span>
+                </template>
+              </el-table-column>
               <el-table-column prop="ticket_no" label="票号" min-width="140">
                 <template #default="{ row }">
                   <template

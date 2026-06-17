@@ -55,9 +55,25 @@ class CreateOrderSerializer(serializers.Serializer):
 
 
 class PassengerReadSerializer(serializers.ModelSerializer):
+    flight_no = serializers.CharField(source='flight.flight_no', read_only=True, default=None)
+    departure_city = serializers.SerializerMethodField()
+    arrival_city = serializers.SerializerMethodField()
+    departure_time = serializers.DateTimeField(source='flight.departure_time', read_only=True, default=None)
+    cabin_class_type = serializers.CharField(source='cabin_class.class_type', read_only=True, default=None)
+
     class Meta:
         model = Passenger
-        fields = ('id', 'name', 'id_type', 'id_number', 'passenger_type', 'ticket_no', 'status')
+        fields = (
+            'id', 'name', 'id_type', 'id_number', 'passenger_type',
+            'ticket_no', 'status', 'flight_no', 'departure_city',
+            'arrival_city', 'departure_time', 'cabin_class_type',
+        )
+
+    def get_departure_city(self, obj):
+        return obj.flight.departure_airport.city if obj.flight else None
+
+    def get_arrival_city(self, obj):
+        return obj.flight.arrival_airport.city if obj.flight else None
 
 
 class AddonServiceReadSerializer(serializers.ModelSerializer):

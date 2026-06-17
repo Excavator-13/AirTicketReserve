@@ -7,6 +7,7 @@
         ref="formRef"
         :model="form"
         :rules="rules"
+        :validate-on-rule-change="false"
         label-position="top"
         @submit.prevent="handleReset"
       >
@@ -153,7 +154,14 @@ const rules = computed(() => ({
 }));
 
 function toggleResetType() {
-  resetType.value = resetType.value === "phone" ? "email" : "phone";
+  formRef.value?.clearValidate();
+  const newType = resetType.value === "phone" ? "email" : "phone";
+  if (newType === "email") {
+    form.value.phone = "";
+  } else {
+    form.value.email = "";
+  }
+  resetType.value = newType;
   nextTick(() => {
     formRef.value?.clearValidate();
   });

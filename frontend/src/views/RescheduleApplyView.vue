@@ -10,14 +10,14 @@
           <div class="card mb-md">
             <h3 class="mb-md">原订单信息</h3>
             <div class="order-summary">
-              <span>{{ order.flight_no }} {{ order.airline }}</span>
+              <span>{{ currentPassengerFlightNo }} {{ order.airline }}</span>
               <span
-                >{{ order.departure_airport?.city }} →
-                {{ order.arrival_airport?.city }}</span
+                >{{ currentPassengerDepartureCity }} →
+                {{ currentPassengerArrivalCity }}</span
               >
-              <span>{{ formatDateTime(order.departure_time) }}</span>
-              <span v-if="order.cabin_info"
-                >{{ cabinTypeLabel(order.cabin_info.class_type) }} ¥{{
+              <span>{{ formatDateTime(currentPassengerDepartureTime) }}</span>
+              <span v-if="currentPassengerCabinType"
+                >{{ cabinTypeLabel(currentPassengerCabinType) }} ¥{{
                   ticketPrice
                 }}/人</span
               >
@@ -146,11 +146,14 @@
 
           <div
             class="card mb-md"
-            v-if="order.cabin_info && order.cabin_info.reschedule_rules"
+            v-if="
+              selectedPassengerCabinInfo &&
+              selectedPassengerCabinInfo.reschedule_rules
+            "
           >
             <h3 class="mb-md">改签规则</h3>
             <el-table
-              :data="order.cabin_info.reschedule_rules"
+              :data="selectedPassengerCabinInfo.reschedule_rules"
               size="small"
               border
               stripe
@@ -274,8 +277,63 @@ const normalPassengers = computed(() => {
   return (order.value?.passengers || []).filter((p) => p.status === "NORMAL");
 });
 
+const selectedPassenger = computed(() => {
+  if (!selectedPassengerId.value) return null;
+  return (
+    normalPassengers.value.find((p) => p.id === selectedPassengerId.value) ||
+    null
+  );
+});
+
+const currentPassengerFlightNo = computed(() => {
+  return selectedPassenger.value?.flight_no || order.value?.flight_no || "";
+});
+
+const currentPassengerDepartureCity = computed(() => {
+  return (
+    selectedPassenger.value?.departure_city ||
+    order.value?.departure_airport?.city ||
+    ""
+  );
+});
+
+const currentPassengerArrivalCity = computed(() => {
+  return (
+    selectedPassenger.value?.arrival_city ||
+    order.value?.arrival_airport?.city ||
+    ""
+  );
+});
+
+const currentPassengerDepartureTime = computed(() => {
+  return (
+    selectedPassenger.value?.departure_time || order.value?.departure_time || ""
+  );
+});
+
+const currentPassengerCabinType = computed(() => {
+  return (
+    selectedPassenger.value?.cabin_class_type ||
+    order.value?.cabin_info?.class_type ||
+    null
+  );
+});
+
+const selectedPassengerCabinInfo = computed(() => {
+  if (selectedPassenger.value?.cabin_class_type) {
+    const cabin = order.value?.cabin_info;
+    if (
+      cabin &&
+      cabin.class_type === selectedPassenger.value.cabin_class_type
+    ) {
+      return cabin;
+    }
+  }
+  return order.value?.cabin_info || null;
+});
+
 const ticketPrice = computed(() => {
-  const c = order.value?.cabin_info;
+  const c = selectedPassengerCabinInfo.value;
   if (!c) return 0;
   return (
     parseFloat(c.price || c.base_price || 0) +
@@ -299,10 +357,10 @@ const priceDiff = computed(() => {
 });
 
 const estimatedFeeRate = computed(() => {
-  const rules = order.value?.cabin_info?.reschedule_rules;
+  const rules = selectedPassengerCabinInfo.value?.reschedule_rules;
   if (!rules || rules.length === 0) return 0;
 
-  const departureTime = new Date(order.value.departure_time).getTime();
+  const departureTime = new Date(currentPassengerDepartureTime.value).getTime();
   const hoursBefore = (departureTime - Date.now()) / 3600000;
 
   const sorted = [...rules].sort((a, b) => b.hours_before - a.hours_before);
@@ -315,9 +373,8 @@ const estimatedFeeRate = computed(() => {
 });
 
 const estimatedFee = computed(() => {
-  const basePrice = parseFloat(
-    order.value?.cabin_info?.base_price || order.value?.cabin_info?.price || 0,
-  );
+  const c = selectedPassengerCabinInfo.value;
+  const basePrice = parseFloat(c?.base_price || c?.price || 0);
   return (basePrice * (parseFloat(estimatedFeeRate.value) / 100)).toFixed(2);
 });
 
@@ -381,8 +438,11 @@ async function searchNewFlights() {
   searching.value = true;
   try {
     const params = {
-      departure_city: order.value.departure_airport?.city,
-      arrival_city: order.value.arrival_airport?.city,
+      departure_city:
+        currentPassengerDepartureCity.value ||
+        order.value.departure_airport?.city,
+      arrival_city:
+        currentPassengerArrivalCity.value || order.value.arrival_airport?.city,
       date: newDate.value,
       adults: 1,
     };

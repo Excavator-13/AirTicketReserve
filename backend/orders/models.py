@@ -130,6 +130,8 @@ class Order(models.Model):
                     id_type=p_data['id_type'],
                     id_number=p_data['id_number'],
                     passenger_type=p_data['passenger_type'],
+                    flight=flight,
+                    cabin_class=cabin_class,
                 )
 
             if addon_services_data:
@@ -201,6 +203,22 @@ class Passenger(models.Model):
         choices=TICKET_STATUS_CHOICES,
         default='NORMAL',
         verbose_name='票状态',
+    )
+    flight = models.ForeignKey(
+        'flights.Flight',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='ticket_passengers',
+        verbose_name='关联航班',
+    )
+    cabin_class = models.ForeignKey(
+        'flights.CabinClass',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='ticket_passengers',
+        verbose_name='关联舱位',
     )
 
     class Meta:

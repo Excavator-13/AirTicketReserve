@@ -50,14 +50,23 @@
             >
               <div class="passenger-section__header">
                 <span>乘机人 {{ index + 1 }}</span>
-                <el-button
-                  v-if="passengers.length > 1"
-                  type="danger"
-                  text
-                  size="small"
-                  @click="removePassenger(index)"
-                  >删除</el-button
-                >
+                <div class="passenger-section__actions">
+                  <el-button
+                    type="primary"
+                    text
+                    size="small"
+                    @click="addToFrequent(index)"
+                    >添加到常用</el-button
+                  >
+                  <el-button
+                    v-if="passengers.length > 1"
+                    type="danger"
+                    text
+                    size="small"
+                    @click="removePassenger(index)"
+                    >删除</el-button
+                  >
+                </div>
               </div>
               <PassengerForm
                 :ref="
@@ -363,8 +372,6 @@ async function handleSubmit() {
       addon_services: addonServices,
     });
 
-    await saveFrequentPassengers(paxData);
-
     ElMessage.success("订单创建成功");
     router.push({ name: "OrderDetail", params: { id: order.id } });
   } catch {
@@ -373,22 +380,34 @@ async function handleSubmit() {
   }
 }
 
-async function saveFrequentPassengers(paxData) {
-  const promises = [];
-  paxData.forEach((pax, index) => {
-    const ref = passengerRefs.value[index];
-    if (ref?.saveAsFrequent?.value && pax.name && pax.id_number) {
-      promises.push(
-        createPassenger({
-          name: pax.name,
-          id_type: pax.id_type,
-          id_number: pax.id_number,
-          passenger_type: pax.passenger_type,
-        }).catch(() => {}),
-      );
-    }
-  });
-  await Promise.all(promises);
+async function addToFrequent(index) {
+  const ref = passengerRefs.value[index];
+  if (!ref) return;
+
+  const valid = await ref.validate?.().catch(() => false);
+  if (!valid) {
+    ElMessage.warning("请先完善乘机人信息");
+    return;
+  }
+
+  const pax = ref.getFormData();
+  try {
+    await createPassenger({
+      name: pax.name,
+      id_type: pax.id_type,
+      id_number: pax.id_number,
+      passenger_type: pax.passenger_type,
+    });
+    ElMessage.success("已添加到常用乘机人");
+    await loadFrequentPassengers();
+  } catch (err) {
+    const msg =
+      err?.response?.data?.errors?.id_number?.[0] ||
+      err?.response?.data?.errors?.non_field_errors?.[0] ||
+      err?.response?.data?.message ||
+      "添加失败，该证件号可能已存在";
+    ElMessage.error(msg);
+  }
 }
 
 onMounted(async () => {
@@ -434,6 +453,11 @@ onMounted(async () => {
   align-items: center;
   margin-bottom: 12px;
   font-weight: 600;
+}
+
+.passenger-section__actions {
+  display: flex;
+  gap: 4px;
 }
 
 .addon-list {

@@ -7,6 +7,7 @@
         ref="formRef"
         :model="form"
         :rules="rules"
+        :validate-on-rule-change="false"
         label-position="top"
         @submit.prevent="handleRegister"
       >
@@ -155,7 +156,14 @@ const rules = computed(() => ({
 }));
 
 function toggleRegisterType() {
-  registerType.value = registerType.value === "phone" ? "email" : "phone";
+  formRef.value?.clearValidate();
+  const newType = registerType.value === "phone" ? "email" : "phone";
+  if (newType === "email") {
+    form.value.phone = "";
+  } else {
+    form.value.email = "";
+  }
+  registerType.value = newType;
   nextTick(() => {
     formRef.value?.clearValidate();
   });

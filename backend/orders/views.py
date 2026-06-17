@@ -33,8 +33,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         ).select_related(
             'flight__departure_airport', 'flight__arrival_airport', 'cabin_class'
         ).prefetch_related(
-            'passengers', 'addon_services',
+            'addon_services',
             'refund_requests', 'reschedule_requests',
+            'passengers__flight__departure_airport',
+            'passengers__flight__arrival_airport',
+            'passengers__cabin_class',
         )
 
     def get_serializer_class(self):
@@ -216,10 +219,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                     )
 
                 now = timezone.now()
-                hours_before = (order.flight.departure_time - now).total_seconds() / 3600
+                passenger_flight = passenger.flight or order.flight
+                passenger_cabin = passenger.cabin_class or order.cabin_class
+                hours_before = (passenger_flight.departure_time - now).total_seconds() / 3600
 
-                fee = order.cabin_class.calculate_refund_fee(hours_before)
-                ticket_price = order.cabin_class.base_price + order.cabin_class.tax + order.cabin_class.fuel_surcharge
+                fee = passenger_cabin.calculate_refund_fee(hours_before)
+                ticket_price = passenger_cabin.base_price + passenger_cabin.tax + passenger_cabin.fuel_surcharge
                 refund_amount = ticket_price - fee
 
                 from refunds.models import RefundRequest
@@ -234,7 +239,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 passenger.status = 'REFUNDED'
                 passenger.save(update_fields=['status'])
 
-                CabinClass.increase_available_seats(order.cabin_class_id, 1)
+                CabinClass.increase_available_seats(passenger_cabin.pk, 1)
 
                 total_refund += refund_amount
                 total_fee += fee
@@ -315,11 +320,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
         now = timezone.now()
-        hours_before = (order.flight.departure_time - now).total_seconds() / 3600
+        passenger_flight = passenger.flight or order.flight
+        passenger_cabin = passenger.cabin_class or order.cabin_class
+        hours_before = (passenger_flight.departure_time - now).total_seconds() / 3600
 
-        reschedule_fee = order.cabin_class.calculate_reschedule_fee(hours_before)
+        reschedule_fee = passenger_cabin.calculate_reschedule_fee(hours_before)
 
-        old_ticket_price = order.cabin_class.base_price + order.cabin_class.tax + order.cabin_class.fuel_surcharge
+        old_ticket_price = passenger_cabin.base_price + passenger_cabin.tax + passenger_cabin.fuel_surcharge
         new_ticket_price = new_cabin.base_price + new_cabin.tax + new_cabin.fuel_surcharge
         price_difference = new_ticket_price - old_ticket_price
 
@@ -327,7 +334,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             CabinClass.decrease_available_seats(new_cabin_id, 1)
-            CabinClass.increase_available_seats(order.cabin_class_id, 1)
+            CabinClass.increase_available_seats(passenger_cabin.pk, 1)
 
             from reschedules.models import RescheduleRequest
             RescheduleRequest.objects.create(
@@ -354,6 +361,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 passenger_type=passenger.passenger_type,
                 ticket_no=new_ticket_no,
                 status='NORMAL',
+                flight=new_flight,
+                cabin_class=new_cabin,
             )
 
         Notification.objects.create(

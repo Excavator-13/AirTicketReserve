@@ -16,13 +16,13 @@ class CityListView(APIView):
     def get(self, request):
         keyword = request.query_params.get('keyword', '').strip()
         if not keyword:
-            airports = Airport.objects.all().order_by('code')[:20]
+            airports = Airport.objects.all().order_by('city', 'code')[:20]
         else:
             airports = Airport.objects.filter(
                 Q(city__icontains=keyword)
                 | Q(name__icontains=keyword)
                 | Q(code__icontains=keyword)
-            ).order_by('code')
+            ).order_by('city', 'code')
         serializer = AirportSerializer(airports, many=True)
         return UnifiedResponse.success(data=serializer.data)
 

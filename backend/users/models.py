@@ -106,6 +106,7 @@ class FrequentPassenger(models.Model):
         db_table = 'users_frequent_passenger'
         verbose_name = '常用乘机人'
         verbose_name_plural = verbose_name
+        unique_together = [('user', 'id_number')]
 
     def __str__(self):
         return f'{self.name}({self.get_id_type_display()})'

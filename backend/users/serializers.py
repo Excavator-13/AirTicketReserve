@@ -212,4 +212,15 @@ class FrequentPassengerSerializer(serializers.ModelSerializer):
         elif id_type == 'PASSPORT':
             if not re.match(r'^[A-Za-z0-9]{5,20}$', id_number):
                 raise serializers.ValidationError({'id_number': '护照号格式不正确'})
+
+        request = self.context.get('request')
+        if request and request.user and id_number:
+            qs = FrequentPassenger.objects.filter(
+                user=request.user, id_number=id_number
+            )
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError({'id_number': '该证件号的常用乘机人已存在'})
+
         return attrs
