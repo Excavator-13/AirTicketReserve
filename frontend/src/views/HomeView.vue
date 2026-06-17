@@ -13,13 +13,6 @@
           ref="searchFormRef"
           label-position="top"
         >
-          <div class="search-form__trip-type">
-            <el-radio-group v-model="searchForm.is_round_trip">
-              <el-radio :value="false">单程</el-radio>
-              <el-radio :value="true">往返</el-radio>
-            </el-radio-group>
-          </div>
-
           <div class="search-form__row">
             <el-form-item
               label="出发城市"
@@ -64,23 +57,6 @@
                 v-model="searchForm.date"
                 type="date"
                 placeholder="选择出发日期"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                :disabled-date="disablePastDate"
-                style="width: 100%"
-              />
-            </el-form-item>
-
-            <el-form-item
-              v-if="searchForm.is_round_trip"
-              label="返程日期"
-              prop="return_date"
-              class="search-form__field"
-            >
-              <el-date-picker
-                v-model="searchForm.return_date"
-                type="date"
-                placeholder="选择返程日期"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
                 :disabled-date="disablePastDate"
@@ -160,8 +136,6 @@ const searchForm = ref({
   departure_airport_code: "",
   arrival_airport_code: "",
   date: "",
-  is_round_trip: false,
-  return_date: "",
   adults: 1,
   children: 0,
   infants: 0,
@@ -287,10 +261,6 @@ async function handleSearch() {
   max-width: 700px;
   margin: 0 auto;
   padding: 28px;
-}
-
-.search-form__trip-type {
-  margin-bottom: 16px;
 }
 
 .search-form__row {

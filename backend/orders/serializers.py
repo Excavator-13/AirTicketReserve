@@ -60,13 +60,14 @@ class PassengerReadSerializer(serializers.ModelSerializer):
     arrival_city = serializers.SerializerMethodField()
     departure_time = serializers.DateTimeField(source='flight.departure_time', read_only=True, default=None)
     cabin_class_type = serializers.CharField(source='cabin_class.class_type', read_only=True, default=None)
+    cabin_detail = CabinClassDetailSerializer(source='cabin_class', read_only=True, default=None)
 
     class Meta:
         model = Passenger
         fields = (
             'id', 'name', 'id_type', 'id_number', 'passenger_type',
             'ticket_no', 'status', 'flight_no', 'departure_city',
-            'arrival_city', 'departure_time', 'cabin_class_type',
+            'arrival_city', 'departure_time', 'cabin_class_type', 'cabin_detail',
         )
 
     def get_departure_city(self, obj):
@@ -140,6 +141,8 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     reschedule_fee_total = serializers.SerializerMethodField()
     reschedule_diff_total = serializers.SerializerMethodField()
     paid_amount = serializers.SerializerMethodField()
+    reschedule_records = serializers.SerializerMethodField()
+    refund_records = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -153,6 +156,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             'remaining_seconds', 'can_refund', 'can_reschedule',
             'addon_total', 'refund_total', 'refund_fee_total',
             'reschedule_fee_total', 'reschedule_diff_total', 'paid_amount',
+            'reschedule_records', 'refund_records',
         )
 
     def get_remaining_seconds(self, obj):
@@ -177,7 +181,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         return False
 
     def get_addon_total(self, obj):
-        pax_count = obj.passengers.count()
+        pax_count = obj.passengers.exclude(status='RESCHEDULED').count()
         total = Decimal('0.00')
         for svc in obj.addon_services.all():
             total += svc.price * pax_count
@@ -217,6 +221,31 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         reschedule_fee_total = Decimal(self.get_reschedule_fee_total(obj))
         paid = obj.total_amount - refund_total + reschedule_diff_total + reschedule_fee_total
         return str(paid.quantize(Decimal('0.01')))
+
+    def get_reschedule_records(self, obj):
+        records = []
+        for req in obj.reschedule_requests.all():
+            if req.status == 'COMPLETED':
+                records.append({
+                    'passenger_name': req.passenger.name,
+                    'new_flight_no': req.new_flight.flight_no,
+                    'price_difference': str(req.price_difference.quantize(Decimal('0.01'))),
+                    'fee': str(req.fee.quantize(Decimal('0.01'))),
+                    'status': req.status,
+                })
+        return records
+
+    def get_refund_records(self, obj):
+        records = []
+        for req in obj.refund_requests.all():
+            if req.status == 'APPROVED':
+                records.append({
+                    'passenger_name': req.passenger.name,
+                    'refund_amount': str(req.refund_amount.quantize(Decimal('0.01'))),
+                    'fee': str(req.fee.quantize(Decimal('0.01'))),
+                    'status': req.status,
+                })
+        return records
 
 
 class PayOrderSerializer(serializers.Serializer):

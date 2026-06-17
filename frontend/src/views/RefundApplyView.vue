@@ -68,21 +68,32 @@
               <span>退票人数</span>
               <span>{{ selectedPassengerIds.length }}人</span>
             </div>
-            <div class="estimate-row">
-              <span>每人票价</span>
-              <span>¥{{ ticketPrice }}</span>
-            </div>
-            <div class="estimate-row">
-              <span>预估手续费率</span>
-              <span>{{ estimatedFeeRate }}%</span>
-            </div>
-            <div class="estimate-row">
-              <span>预估手续费</span>
-              <span>¥{{ estimatedFee }}</span>
+            <div
+              v-for="pax in selectedPassengers"
+              :key="pax.id"
+              class="refund-pax-estimate"
+            >
+              <div class="refund-pax-name">{{ pax.name }}</div>
+              <div class="estimate-row">
+                <span>票价</span>
+                <span>¥{{ getPaxTicketPrice(pax) }}</span>
+              </div>
+              <div class="estimate-row">
+                <span>预估手续费率</span>
+                <span>{{ getPaxFeeRate(pax) }}%</span>
+              </div>
+              <div class="estimate-row">
+                <span>预估手续费</span>
+                <span>¥{{ getPaxFee(pax) }}</span>
+              </div>
+              <div class="estimate-row">
+                <span>预估退还</span>
+                <span class="text-success">¥{{ getPaxRefund(pax) }}</span>
+              </div>
             </div>
             <div class="estimate-row estimate-row--highlight">
-              <span>预估退还金额</span>
-              <span class="price">¥{{ estimatedRefund }}</span>
+              <span>预估退还总额</span>
+              <span class="price">¥{{ totalEstimatedRefund }}</span>
             </div>
             <div class="text-secondary mt-sm" style="font-size: 12px">
               * 最终退款金额以后端计算为准
@@ -125,21 +136,35 @@ const normalPassengers = computed(() => {
   return (order.value?.passengers || []).filter((p) => p.status === "NORMAL");
 });
 
-const ticketPrice = computed(() => {
-  const c = order.value?.cabin_info;
-  if (!c) return 0;
+const selectedPassengers = computed(() => {
+  return normalPassengers.value.filter((p) =>
+    selectedPassengerIds.value.includes(p.id),
+  );
+});
+
+function getPaxCabinInfo(pax) {
+  return pax.cabin_detail || order.value?.cabin_info || null;
+}
+
+function getPaxTicketPrice(pax) {
+  const c = getPaxCabinInfo(pax);
+  if (!c) return "0.00";
   return (
     parseFloat(c.price || c.base_price || 0) +
     parseFloat(c.tax || 0) +
     parseFloat(c.fuel_surcharge || 0)
   ).toFixed(2);
-});
+}
 
-const estimatedFeeRate = computed(() => {
-  const rules = order.value?.cabin_info?.refund_rules;
+function getPaxFeeRate(pax) {
+  const c = getPaxCabinInfo(pax);
+  const rules = c?.refund_rules;
   if (!rules || rules.length === 0) return 0;
 
-  const departureTime = new Date(order.value.departure_time).getTime();
+  const paxFlight = pax.flight_no ? pax : null;
+  const departureTime = new Date(
+    paxFlight?.departure_time || order.value?.departure_time || "",
+  ).getTime();
   const hoursBefore = (departureTime - Date.now()) / 3600000;
 
   const sorted = [...rules].sort((a, b) => b.hours_before - a.hours_before);
@@ -149,23 +174,24 @@ const estimatedFeeRate = computed(() => {
     }
   }
   return (sorted[0].fee_rate * 100).toFixed(0);
-});
+}
 
-const estimatedFee = computed(() => {
-  const basePrice = parseFloat(
-    order.value?.cabin_info?.base_price || order.value?.cabin_info?.price || 0,
-  );
-  const fee =
-    basePrice *
-    (parseFloat(estimatedFeeRate.value) / 100) *
-    selectedPassengerIds.value.length;
-  return fee.toFixed(2);
-});
+function getPaxFee(pax) {
+  const c = getPaxCabinInfo(pax);
+  const basePrice = parseFloat(c?.base_price || c?.price || 0);
+  return (basePrice * (parseFloat(getPaxFeeRate(pax)) / 100)).toFixed(2);
+}
 
-const estimatedRefund = computed(() => {
-  const total =
-    parseFloat(ticketPrice.value) * selectedPassengerIds.value.length;
-  return Math.max(0, total - parseFloat(estimatedFee.value)).toFixed(2);
+function getPaxRefund(pax) {
+  const ticketPrice = parseFloat(getPaxTicketPrice(pax));
+  const fee = parseFloat(getPaxFee(pax));
+  return Math.max(0, ticketPrice - fee).toFixed(2);
+}
+
+const totalEstimatedRefund = computed(() => {
+  return selectedPassengers.value
+    .reduce((sum, pax) => sum + parseFloat(getPaxRefund(pax)), 0)
+    .toFixed(2);
 });
 
 function idTypeLabel(type) {
@@ -181,7 +207,7 @@ function formatDateTime(isoStr) {
 async function handleRefund() {
   try {
     await ElMessageBox.confirm(
-      `确认对 ${selectedPassengerIds.value.length} 位乘机人申请退票？预估退还 ¥${estimatedRefund.value}`,
+      `确认对 ${selectedPassengerIds.value.length} 位乘机人申请退票？预估退还 ¥${totalEstimatedRefund.value}`,
       "退票确认",
       {
         confirmButtonText: "确认退票",
@@ -245,6 +271,24 @@ onMounted(() => {
 
 .estimate-row--highlight .price {
   font-size: 20px;
+}
+
+.refund-pax-estimate {
+  padding: 10px 0;
+  border-top: 1px dashed var(--color-border);
+  margin-top: 8px;
+}
+
+.refund-pax-estimate:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+
+.refund-pax-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: var(--color-text-primary);
 }
 
 .refund-action {

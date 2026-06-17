@@ -34,6 +34,7 @@ class FlightSearchView(APIView):
         departure_city = request.query_params.get('departure_city', '').strip()
         arrival_city = request.query_params.get('arrival_city', '').strip()
         date_str = request.query_params.get('date', '').strip()
+        flight_no = request.query_params.get('flight_no', '').strip()
         is_round_trip = request.query_params.get('is_round_trip', 'false').lower() == 'true'
         return_date_str = request.query_params.get('return_date', '').strip()
         adults = int(request.query_params.get('adults', 1))
@@ -67,6 +68,9 @@ class FlightSearchView(APIView):
             arrival_airport_id__in=arrival_airport_ids,
             departure_time__date=departure_date,
         ).select_related('departure_airport', 'arrival_airport').prefetch_related('cabin_classes')
+
+        if flight_no:
+            outbound_flights = outbound_flights.filter(flight_no__icontains=flight_no)
 
         outbound_serializer = FlightListSerializer(outbound_flights, many=True)
 

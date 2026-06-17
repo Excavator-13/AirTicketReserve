@@ -145,6 +145,13 @@
           </div>
 
           <div
+            v-if="hasSearched && newFlights.length === 0 && !searching"
+            class="card mb-md"
+          >
+            <el-empty description="暂无符合条件的航班" />
+          </div>
+
+          <div
             class="card mb-md"
             v-if="
               selectedPassengerCabinInfo &&
@@ -263,6 +270,7 @@ const selectedPassengerId = ref(null);
 const newDate = ref("");
 const newFlightNo = ref("");
 const searching = ref(false);
+const hasSearched = ref(false);
 const newFlights = ref([]);
 const rescheduleSortBy = ref("price");
 const selectedNewFlight = ref(null);
@@ -320,14 +328,8 @@ const currentPassengerCabinType = computed(() => {
 });
 
 const selectedPassengerCabinInfo = computed(() => {
-  if (selectedPassenger.value?.cabin_class_type) {
-    const cabin = order.value?.cabin_info;
-    if (
-      cabin &&
-      cabin.class_type === selectedPassenger.value.cabin_class_type
-    ) {
-      return cabin;
-    }
+  if (selectedPassenger.value?.cabin_detail) {
+    return selectedPassenger.value.cabin_detail;
   }
   return order.value?.cabin_info || null;
 });
@@ -451,6 +453,7 @@ async function searchNewFlights() {
     }
     const data = await searchFlights(params);
     newFlights.value = data.outbound || [];
+    hasSearched.value = true;
     selectedNewFlight.value = null;
     selectedNewCabin.value = null;
   } catch {

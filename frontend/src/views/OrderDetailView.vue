@@ -210,71 +210,92 @@
               <span>燃油附加费</span>
               <span>¥{{ order.cabin_info.fuel_surcharge }}/人</span>
             </div>
-            <div
-              class="price-row"
-              v-if="order.addon_total && parseFloat(order.addon_total) > 0"
+            <template
+              v-if="order.addon_services && order.addon_services.length"
             >
-              <span>附加服务费</span>
-              <span>¥{{ order.addon_total }}</span>
-            </div>
+              <div
+                class="price-row"
+                v-for="svc in order.addon_services"
+                :key="svc.id"
+              >
+                <span>{{ svc.service_name }}</span>
+                <span
+                  >¥{{ svc.price }}/人 × {{ addonPaxCount }}人 = ¥{{
+                    (parseFloat(svc.price) * addonPaxCount).toFixed(2)
+                  }}</span
+                >
+              </div>
+            </template>
             <div class="price-row price-row--subtotal">
               <span>订单总额</span>
               <span>¥{{ order.total_amount }}</span>
             </div>
-            <div
-              class="price-row"
-              v-if="order.refund_total && parseFloat(order.refund_total) > 0"
-            >
-              <span>退票退款</span>
-              <span class="text-success">-¥{{ order.refund_total }}</span>
-            </div>
-            <div
-              class="price-row"
+
+            <template
               v-if="
-                order.refund_fee_total && parseFloat(order.refund_fee_total) > 0
+                order.reschedule_records && order.reschedule_records.length > 0
               "
             >
-              <span>退票手续费</span>
-              <span>¥{{ order.refund_fee_total }}</span>
-            </div>
-            <div
-              class="price-row"
-              v-if="
-                order.reschedule_fee_total &&
-                parseFloat(order.reschedule_fee_total) > 0
-              "
-            >
-              <span>改签手续费</span>
-              <span>¥{{ order.reschedule_fee_total }}</span>
-            </div>
-            <div
-              class="price-row"
-              v-if="
-                order.reschedule_diff_total &&
-                parseFloat(order.reschedule_diff_total) !== 0
-              "
-            >
-              <span>改签差价</span>
-              <span
-                :class="
-                  parseFloat(order.reschedule_diff_total) > 0
-                    ? 'text-danger'
-                    : 'text-success'
-                "
+              <div class="price-section-divider"></div>
+              <div class="price-section-label">改签记录</div>
+              <div
+                v-for="(rec, idx) in order.reschedule_records"
+                :key="'reschedule-' + idx"
+                class="price-record-block"
               >
-                {{ parseFloat(order.reschedule_diff_total) > 0 ? "+" : "" }}¥{{
-                  order.reschedule_diff_total
-                }}
-              </span>
-            </div>
-            <div
-              class="price-row price-row--total"
-              v-if="
-                order.paid_amount &&
-                order.refund_total &&
-                parseFloat(order.refund_total) > 0
-              "
+                <div class="price-record-title">
+                  改签 #{{ idx + 1 }}：{{ rec.passenger_name }} →
+                  {{ rec.new_flight_no }}
+                </div>
+                <div class="price-row">
+                  <span>改签手续费</span>
+                  <span>¥{{ rec.fee }}</span>
+                </div>
+                <div
+                  class="price-row"
+                  v-if="parseFloat(rec.price_difference) !== 0"
+                >
+                  <span>改签差价</span>
+                  <span
+                    :class="
+                      parseFloat(rec.price_difference) > 0
+                        ? 'text-danger'
+                        : 'text-success'
+                    "
+                  >
+                    {{ parseFloat(rec.price_difference) > 0 ? "+" : "" }}¥{{
+                      rec.price_difference
+                    }}
+                  </span>
+                </div>
+              </div>
+            </template>
+
+            <template
+              v-if="order.refund_records && order.refund_records.length > 0"
             >
+              <div class="price-section-divider"></div>
+              <div class="price-section-label">退票记录</div>
+              <div
+                v-for="(rec, idx) in order.refund_records"
+                :key="'refund-' + idx"
+                class="price-record-block"
+              >
+                <div class="price-record-title">
+                  退票：{{ rec.passenger_name }}
+                </div>
+                <div class="price-row">
+                  <span>退票退款</span>
+                  <span class="text-success">-¥{{ rec.refund_amount }}</span>
+                </div>
+                <div class="price-row">
+                  <span>退票手续费</span>
+                  <span>¥{{ rec.fee }}</span>
+                </div>
+              </div>
+            </template>
+
+            <div class="price-row price-row--total" v-if="order.paid_amount">
               <span>实付金额</span>
               <span class="price">¥{{ order.paid_amount }}</span>
             </div>
@@ -346,6 +367,13 @@ const paying = ref(false);
 const cancelling = ref(false);
 
 const order = computed(() => orderStore.currentOrder);
+
+const addonPaxCount = computed(() => {
+  if (!order.value) return 0;
+  return order.value.passengers
+    ? order.value.passengers.filter((p) => p.status !== "RESCHEDULED").length
+    : 0;
+});
 
 const statusStep = computed(() => {
   const s = order.value?.status;
@@ -559,6 +587,34 @@ watch(
 
 .price-row--total .price {
   font-size: 22px;
+}
+
+.price-section-divider {
+  border-top: 1px dashed var(--color-border);
+  margin: 12px 0;
+}
+
+.price-section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.price-record-block {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.price-record-block:last-child {
+  border-bottom: none;
+}
+
+.price-record-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-regular);
+  margin-bottom: 4px;
 }
 
 .order-detail__actions {

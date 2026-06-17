@@ -129,9 +129,29 @@
                 }}</span
               >
             </div>
-            <div class="price-row" v-if="totalAddonPrice > 0">
-              <span>附加服务</span>
-              <span>¥{{ totalAddonPrice.toFixed(2) }}</span>
+            <div class="price-row" v-if="addons.insurance">
+              <span>航空意外险</span>
+              <span
+                >¥30 × {{ passengers.length }}人 = ¥{{
+                  (30 * passengers.length).toFixed(2)
+                }}</span
+              >
+            </div>
+            <div class="price-row" v-if="addons.delay">
+              <span>航班延误险</span>
+              <span
+                >¥20 × {{ passengers.length }}人 = ¥{{
+                  (20 * passengers.length).toFixed(2)
+                }}</span
+              >
+            </div>
+            <div class="price-row" v-if="addons.seat">
+              <span>优选座位</span>
+              <span
+                >¥50 × {{ passengers.length }}人 = ¥{{
+                  (50 * passengers.length).toFixed(2)
+                }}</span
+              >
             </div>
             <div class="price-row price-row--total">
               <span>总计</span>

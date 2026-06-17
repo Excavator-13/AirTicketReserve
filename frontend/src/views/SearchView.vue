@@ -526,6 +526,7 @@ onBeforeUnmount(() => {
 .search-page__body {
   display: flex;
   gap: 20px;
+  align-items: flex-start;
 }
 
 .search-page__filter {
@@ -573,6 +574,11 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-color);
+  padding: 8px 0;
 }
 
 .filter-drawer-btn {
