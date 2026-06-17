@@ -5,6 +5,8 @@ from rest_framework import serializers
 from flights.models import Flight, CabinClass
 from flights.serializers import AirportSerializer, CabinClassDetailSerializer
 from orders.models import Order, Passenger, AddonService, Payment
+from refunds.models import RefundRequest
+from reschedules.models import RescheduleRequest
 
 
 class PassengerWriteSerializer(serializers.Serializer):
@@ -116,6 +118,12 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     remaining_seconds = serializers.SerializerMethodField()
     can_refund = serializers.SerializerMethodField()
     can_reschedule = serializers.SerializerMethodField()
+    addon_total = serializers.SerializerMethodField()
+    refund_total = serializers.SerializerMethodField()
+    refund_fee_total = serializers.SerializerMethodField()
+    reschedule_fee_total = serializers.SerializerMethodField()
+    reschedule_diff_total = serializers.SerializerMethodField()
+    paid_amount = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -127,6 +135,8 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             'departure_time', 'arrival_time', 'aircraft_type', 'is_direct',
             'cabin_info', 'passengers', 'addon_services',
             'remaining_seconds', 'can_refund', 'can_reschedule',
+            'addon_total', 'refund_total', 'refund_fee_total',
+            'reschedule_fee_total', 'reschedule_diff_total', 'paid_amount',
         )
 
     def get_remaining_seconds(self, obj):
@@ -149,6 +159,48 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             normal_passengers = obj.passengers.filter(status='NORMAL').exists()
             return normal_passengers
         return False
+
+    def get_addon_total(self, obj):
+        pax_count = obj.passengers.count()
+        total = Decimal('0.00')
+        for svc in obj.addon_services.all():
+            total += svc.price * pax_count
+        return str(total.quantize(Decimal('0.01')))
+
+    def get_refund_total(self, obj):
+        total = Decimal('0.00')
+        for req in obj.refund_requests.all():
+            if req.status == 'APPROVED':
+                total += req.refund_amount
+        return str(total.quantize(Decimal('0.01')))
+
+    def get_refund_fee_total(self, obj):
+        total = Decimal('0.00')
+        for req in obj.refund_requests.all():
+            if req.status == 'APPROVED':
+                total += req.fee
+        return str(total.quantize(Decimal('0.01')))
+
+    def get_reschedule_fee_total(self, obj):
+        total = Decimal('0.00')
+        for req in obj.reschedule_requests.all():
+            if req.status == 'COMPLETED':
+                total += req.fee
+        return str(total.quantize(Decimal('0.01')))
+
+    def get_reschedule_diff_total(self, obj):
+        total = Decimal('0.00')
+        for req in obj.reschedule_requests.all():
+            if req.status == 'COMPLETED':
+                total += req.price_difference
+        return str(total.quantize(Decimal('0.01')))
+
+    def get_paid_amount(self, obj):
+        refund_total = Decimal(self.get_refund_total(obj))
+        reschedule_diff_total = Decimal(self.get_reschedule_diff_total(obj))
+        reschedule_fee_total = Decimal(self.get_reschedule_fee_total(obj))
+        paid = obj.total_amount - refund_total + reschedule_diff_total + reschedule_fee_total
+        return str(paid.quantize(Decimal('0.01')))
 
 
 class PayOrderSerializer(serializers.Serializer):

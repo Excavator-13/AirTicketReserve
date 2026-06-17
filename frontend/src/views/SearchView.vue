@@ -13,8 +13,13 @@
           class="search-page__filter hide-mobile"
           v-if="outboundFlights.length"
         >
-          <div class="card">
-            <h4>筛选</h4>
+          <div class="card filter-card">
+            <div class="filter-header">
+              <h4>筛选</h4>
+              <el-button type="primary" link size="small" @click="resetFilters"
+                >重置</el-button
+              >
+            </div>
 
             <div class="filter-group">
               <div class="filter-label">航班类型</div>
@@ -161,12 +166,15 @@
         <el-icon><Filter /></el-icon>
       </el-button>
 
-      <el-drawer
-        v-model="filterDrawerVisible"
-        title="筛选"
-        direction="btt"
-        size="60%"
-      >
+      <el-drawer v-model="filterDrawerVisible" direction="btt" size="60%">
+        <template #header>
+          <div class="filter-header">
+            <span>筛选</span>
+            <el-button type="primary" link size="small" @click="resetFilters"
+              >重置</el-button
+            >
+          </div>
+        </template>
         <div class="filter-group">
           <div class="filter-label">航班类型</div>
           <el-checkbox v-model="filters.directOnly">仅直飞</el-checkbox>
@@ -430,6 +438,18 @@ function initFiltersFromRoute() {
   }
 }
 
+function resetFilters() {
+  filters.value = {
+    directOnly: false,
+    airlines: [],
+    departureAirports: [],
+    arrivalAirports: [],
+    aircraftSizes: [],
+    timeRange: [0, 24],
+    arrivalTimeRange: [0, 24],
+  };
+}
+
 function restoreFromStore() {
   const sp = flightStore.searchParams;
   const rq = route.query;
@@ -511,6 +531,25 @@ onBeforeUnmount(() => {
 .search-page__filter {
   width: 240px;
   flex-shrink: 0;
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.filter-card {
+  overflow: visible;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-header h4 {
+  margin: 0;
 }
 
 .filter-group {

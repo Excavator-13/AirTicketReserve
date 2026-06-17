@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/store/auth";
@@ -156,6 +156,9 @@ const rules = computed(() => ({
 
 function toggleRegisterType() {
   registerType.value = registerType.value === "phone" ? "email" : "phone";
+  nextTick(() => {
+    formRef.value?.clearValidate();
+  });
 }
 
 async function handleSendCode() {

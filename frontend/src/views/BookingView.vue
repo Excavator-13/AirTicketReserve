@@ -328,9 +328,11 @@ function selectFrequentPassenger(fp) {
 
 async function handleSubmit() {
   await nextTick();
-  const validRefs = passengerRefs.value.filter(Boolean);
   const validations = await Promise.all(
-    validRefs.map((ref) => ref?.validate?.().catch(() => false)),
+    passengerRefs.value.map((ref, index) => {
+      if (!ref) return Promise.resolve(true);
+      return ref.validate?.().catch(() => false);
+    }),
   );
   if (validations.some((v) => v !== true)) {
     ElMessage.warning("请完善乘机人信息");
@@ -372,10 +374,9 @@ async function handleSubmit() {
 }
 
 async function saveFrequentPassengers(paxData) {
-  const validRefs = passengerRefs.value.filter(Boolean);
   const promises = [];
   paxData.forEach((pax, index) => {
-    const ref = validRefs[index];
+    const ref = passengerRefs.value[index];
     if (ref?.saveAsFrequent?.value && pax.name && pax.id_number) {
       promises.push(
         createPassenger({

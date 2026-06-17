@@ -54,6 +54,12 @@
                 value-format="YYYY-MM-DD"
                 :disabled-date="disablePastDate"
               />
+              <el-input
+                v-model="newFlightNo"
+                placeholder="航班号（可选）"
+                clearable
+                style="width: 160px"
+              />
               <el-button
                 type="primary"
                 @click="searchNewFlights"
@@ -64,9 +70,18 @@
           </div>
 
           <div v-if="newFlights.length > 0" class="mb-md">
+            <div class="reschedule-sort">
+              <span class="text-secondary">排序：</span>
+              <el-radio-group v-model="rescheduleSortBy" size="small">
+                <el-radio-button value="price">价格</el-radio-button>
+                <el-radio-button value="departure">起飞时间</el-radio-button>
+                <el-radio-button value="arrival">到达时间</el-radio-button>
+                <el-radio-button value="duration">飞行时长</el-radio-button>
+              </el-radio-group>
+            </div>
             <h3 class="mb-md">选择新航班</h3>
             <div
-              v-for="flight in newFlights"
+              v-for="flight in sortedNewFlights"
               :key="flight.id"
               class="card new-flight-card"
               :class="{
@@ -243,8 +258,10 @@ const flightStore = useFlightStore();
 
 const selectedPassengerId = ref(null);
 const newDate = ref("");
+const newFlightNo = ref("");
 const searching = ref(false);
 const newFlights = ref([]);
+const rescheduleSortBy = ref("price");
 const selectedNewFlight = ref(null);
 const selectedNewCabin = ref(null);
 const submitting = ref(false);
@@ -308,6 +325,24 @@ const totalPay = computed(() => {
   return parseFloat(estimatedFee.value) + Math.max(priceDiff.value, 0);
 });
 
+const sortedNewFlights = computed(() => {
+  const result = [...newFlights.value];
+  if (rescheduleSortBy.value === "price") {
+    result.sort((a, b) => (a.min_price || 0) - (b.min_price || 0));
+  } else if (rescheduleSortBy.value === "departure") {
+    result.sort(
+      (a, b) => new Date(a.departure_time) - new Date(b.departure_time),
+    );
+  } else if (rescheduleSortBy.value === "arrival") {
+    result.sort((a, b) => new Date(a.arrival_time) - new Date(b.arrival_time));
+  } else if (rescheduleSortBy.value === "duration") {
+    result.sort(
+      (a, b) => (a.duration_minutes || 0) - (b.duration_minutes || 0),
+    );
+  }
+  return result;
+});
+
 function cabinTypeLabel(type) {
   const map = { ECONOMY: "经济舱", BUSINESS: "商务舱", FIRST: "头等舱" };
   return map[type] || type;
@@ -345,12 +380,16 @@ async function searchNewFlights() {
 
   searching.value = true;
   try {
-    const data = await searchFlights({
+    const params = {
       departure_city: order.value.departure_airport?.city,
       arrival_city: order.value.arrival_airport?.city,
       date: newDate.value,
       adults: 1,
-    });
+    };
+    if (newFlightNo.value.trim()) {
+      params.flight_no = newFlightNo.value.trim();
+    }
+    const data = await searchFlights(params);
     newFlights.value = data.outbound || [];
     selectedNewFlight.value = null;
     selectedNewCabin.value = null;
@@ -531,6 +570,13 @@ onBeforeUnmount(() => {
 
 .floating-reschedule-bar .el-button {
   min-width: 200px;
+}
+
+.reschedule-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .has-floating-bar {

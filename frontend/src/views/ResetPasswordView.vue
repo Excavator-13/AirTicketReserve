@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "@/store/auth";
@@ -154,6 +154,9 @@ const rules = computed(() => ({
 
 function toggleResetType() {
   resetType.value = resetType.value === "phone" ? "email" : "phone";
+  nextTick(() => {
+    formRef.value?.clearValidate();
+  });
 }
 
 async function handleSendCode() {

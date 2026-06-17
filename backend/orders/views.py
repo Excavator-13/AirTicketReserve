@@ -32,7 +32,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             user=self.request.user
         ).select_related(
             'flight__departure_airport', 'flight__arrival_airport', 'cabin_class'
-        ).prefetch_related('passengers', 'addon_services')
+        ).prefetch_related(
+            'passengers', 'addon_services',
+            'refund_requests', 'reschedule_requests',
+        )
 
     def get_serializer_class(self):
         if self.action == 'create':

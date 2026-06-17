@@ -59,6 +59,9 @@
           </template>
 
           <template v-else>
+            <router-link to="/register">
+              <el-button size="small">注册</el-button>
+            </router-link>
             <router-link to="/login">
               <el-button type="primary" size="small">登录</el-button>
             </router-link>
@@ -129,6 +132,13 @@
           @click="mobileMenuVisible = false"
           v-if="!authStore.isLoggedIn"
           >登录</router-link
+        >
+        <router-link
+          to="/register"
+          class="mobile-menu__item"
+          @click="mobileMenuVisible = false"
+          v-if="!authStore.isLoggedIn"
+          >注册</router-link
         >
       </div>
     </el-drawer>

@@ -121,7 +121,17 @@
               </el-table-column>
               <el-table-column prop="ticket_no" label="票号" min-width="140">
                 <template #default="{ row }">
-                  {{ row.ticket_no || "-" }}
+                  <template
+                    v-if="row.ticket_no && row.ticket_no.includes('-VOID')"
+                  >
+                    <span>{{ row.ticket_no.replace("-VOID", "") }}</span>
+                    <el-tag type="info" size="small" class="ml-sm"
+                      >已作废</el-tag
+                    >
+                  </template>
+                  <template v-else>
+                    {{ row.ticket_no || "-" }}
+                  </template>
                 </template>
               </el-table-column>
               <el-table-column label="状态" min-width="80">
@@ -145,7 +155,7 @@
               class="addon-row"
             >
               <span>{{ svc.service_name }}</span>
-              <span>¥{{ svc.price }}</span>
+              <span>¥{{ svc.price }}/人</span>
             </div>
           </div>
 
@@ -167,9 +177,73 @@
               <span>燃油附加费</span>
               <span>¥{{ order.cabin_info.fuel_surcharge }}/人</span>
             </div>
-            <div class="price-row price-row--total">
+            <div
+              class="price-row"
+              v-if="order.addon_total && parseFloat(order.addon_total) > 0"
+            >
+              <span>附加服务费</span>
+              <span>¥{{ order.addon_total }}</span>
+            </div>
+            <div class="price-row price-row--subtotal">
               <span>订单总额</span>
-              <span class="price">¥{{ order.total_amount }}</span>
+              <span>¥{{ order.total_amount }}</span>
+            </div>
+            <div
+              class="price-row"
+              v-if="order.refund_total && parseFloat(order.refund_total) > 0"
+            >
+              <span>退票退款</span>
+              <span class="text-success">-¥{{ order.refund_total }}</span>
+            </div>
+            <div
+              class="price-row"
+              v-if="
+                order.refund_fee_total && parseFloat(order.refund_fee_total) > 0
+              "
+            >
+              <span>退票手续费</span>
+              <span>¥{{ order.refund_fee_total }}</span>
+            </div>
+            <div
+              class="price-row"
+              v-if="
+                order.reschedule_fee_total &&
+                parseFloat(order.reschedule_fee_total) > 0
+              "
+            >
+              <span>改签手续费</span>
+              <span>¥{{ order.reschedule_fee_total }}</span>
+            </div>
+            <div
+              class="price-row"
+              v-if="
+                order.reschedule_diff_total &&
+                parseFloat(order.reschedule_diff_total) !== 0
+              "
+            >
+              <span>改签差价</span>
+              <span
+                :class="
+                  parseFloat(order.reschedule_diff_total) > 0
+                    ? 'text-danger'
+                    : 'text-success'
+                "
+              >
+                {{ parseFloat(order.reschedule_diff_total) > 0 ? "+" : "" }}¥{{
+                  order.reschedule_diff_total
+                }}
+              </span>
+            </div>
+            <div
+              class="price-row price-row--total"
+              v-if="
+                order.paid_amount &&
+                order.refund_total &&
+                parseFloat(order.refund_total) > 0
+              "
+            >
+              <span>实付金额</span>
+              <span class="price">¥{{ order.paid_amount }}</span>
             </div>
           </div>
 
@@ -433,6 +507,13 @@ watch(
   justify-content: space-between;
   padding: 8px 0;
   font-size: 14px;
+}
+
+.price-row--subtotal {
+  border-top: 1px solid var(--color-border);
+  margin-top: 8px;
+  padding-top: 8px;
+  font-weight: 600;
 }
 
 .price-row--total {
