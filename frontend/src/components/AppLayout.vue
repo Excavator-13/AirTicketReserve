@@ -146,12 +146,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { Bell, User, Menu } from "@element-plus/icons-vue";
 import { useAuthStore } from "@/store/auth";
 import { useNotificationStore } from "@/store/notification";
 
+const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
@@ -183,6 +184,21 @@ function handleLogout() {
   mobileMenuVisible.value = false;
   router.push({ name: "Home" });
 }
+
+onMounted(() => {
+  if (authStore.isLoggedIn) {
+    notificationStore.fetchUnreadCount();
+  }
+});
+
+watch(
+  () => route.path,
+  () => {
+    if (authStore.isLoggedIn) {
+      notificationStore.fetchUnreadCount();
+    }
+  },
+);
 </script>
 
 <style scoped>

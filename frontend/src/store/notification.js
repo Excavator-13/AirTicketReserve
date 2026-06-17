@@ -1,5 +1,9 @@
 import { defineStore } from "pinia";
-import { fetchNotifications, markNotificationRead } from "@/api/notifications";
+import {
+  fetchNotifications,
+  fetchUnreadCount,
+  markNotificationRead,
+} from "@/api/notifications";
 
 export const useNotificationStore = defineStore("notification", {
   state: () => ({
@@ -24,10 +28,17 @@ export const useNotificationStore = defineStore("notification", {
           page: data.page || 1,
           page_size: data.page_size || 10,
         };
-        this.unreadCount = this.notifications.filter((n) => !n.is_read).length;
+        await this.fetchUnreadCount();
       } finally {
         this.loading = false;
       }
+    },
+
+    async fetchUnreadCount() {
+      try {
+        const data = await fetchUnreadCount();
+        this.unreadCount = data.unread_count || 0;
+      } catch {}
     },
 
     async markAsRead(id) {

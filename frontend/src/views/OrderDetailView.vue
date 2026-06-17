@@ -219,11 +219,7 @@
                 :key="svc.id"
               >
                 <span>{{ svc.service_name }}</span>
-                <span
-                  >¥{{ svc.price }}/人 × {{ addonPaxCount }}人 = ¥{{
-                    (parseFloat(svc.price) * addonPaxCount).toFixed(2)
-                  }}</span
-                >
+                <span>¥{{ svc.price }}/人</span>
               </div>
             </template>
             <div class="price-row price-row--subtotal">

@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
 
 from common.responses import UnifiedResponse
 from common.permissions import IsOwner
@@ -46,3 +47,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         return UnifiedResponse.error(msg='不允许删除通知', code=403)
+
+    @action(detail=False, methods=['get'], url_path='unread-count')
+    def unread_count(self, request):
+        count = self.get_queryset().filter(is_read=False).count()
+        return UnifiedResponse.success(data={'unread_count': count})
